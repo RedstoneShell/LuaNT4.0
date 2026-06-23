@@ -59,7 +59,7 @@ function ntdll.NtCreateUserProcess(path, name, priority, commandLineArgs)
                 end
                 return _G.LdrLoadDll(dllPath)
             end
-            setfenv(chunk, sandboxedEnv)
+            --setfenv(chunk, sandboxedEnv) He didn't work here..
             return chunk
         end
         return originalNtOpenFile(p)
