@@ -951,41 +951,21 @@ while true do
     -- Threads updates in ntoskrnl.lua, TODO: pullSignal downleveled from 0.2 to 0.01 for minimal freezing of threads
     local nextThread, activePrio = KiSelectNextThread()
     if nextThread then
-        _G.CurrentThread = nextThread
         nextThread.quantumLeft = nextThread.quantumLeft - 1
+        
         local success, err = coroutine.resume(nextThread.co, sig, addr, arg1, arg2, arg3, arg4)
         
         if not success then
-            _G.DbgPrint("KE: Thread " .. tostring(nextThread.name) .. " crashed: " .. tostring(err))
-            KiTerminateThread(nextThread, activePrio)
-            if _G.MmZeroThreadMemory then _G.MmZeroThreadMemory(nextThread) end
-            
+            _G.DbgPrint("KE: Thread " .. nextThread.name .. " crashed: " .. tostring(err))
+            table.remove(ReadyQueues[activePrio], 1)
         elseif coroutine.status(nextThread.co) == "dead" then
-            KiTerminateThread(nextThread, activePrio)
-            if _G.MmZeroThreadMemory then _G.MmZeroThreadMemory(nextThread) end
-            
+            table.remove(ReadyQueues[activePrio], 1)
         else
             if nextThread.quantumLeft <= 0 then
                 nextThread.quantumLeft = 6
-                local queue = ReadyQueues[activePrio]
-                if queue and #queue > 1 then
-                    for i = 1, #queue do
-                        if queue[i] == nextThread then
-                            table.remove(queue, i)
-                            table.insert(queue, nextThread)
-                            break
-                        end
-                    end
-                else
-                    computer.pullSignal(0.05) 
-                end
+                table.remove(ReadyQueues[activePrio], 1)
+                table.insert(ReadyQueues[activePrio], nextThread)
             end
-        end
-    else
-        if _G.KiDispatchInterrupt then
-            _G.KiDispatchInterrupt()
-        else
-            computer.pullSignal(0.05)
         end
     end
     
