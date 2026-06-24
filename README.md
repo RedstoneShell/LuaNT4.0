@@ -19,6 +19,9 @@ Now you can make with he everything, or update with WinUpdate.
 ## Some help...
 If you don't know how to login, password for Administrator is "admin123", but you can CHANGE he, by start usrman or Start>User Manager, select Administrator, by ^v select Password and ENTER, write own, press < and after reboot, at password "admin123", you can see Login Error.
 
+## How to get updates?
+Possibly you can see in Task Manager, strange **WUSvc.exe**, is a Windows Update Service, he checks updates of LuaNT here, if he detect update, you can see in right-top corner blue frame with text, and after next Power On **init.lua** installs updates from Windows/WinSxS and after update WinSxS removed. If you not gets update, you not have **Internet Card**, or LuaNT Update Config at GitHub not updates, or I (RedstoneShel) don't make update. All asks and bugs in Issues.
+
 ## How to make my clone and install my friend or at server?
 If you install LuaNT 4.0, you can open a **SetupMgr** and if you install Disk Drive, and put in he Floppy, in Setup Mgr you can click ENTER and create **Installation Floppy**
 After, you can give this Floppy to other player, and he install this floppy in own PC, boot from he. And by open Menu of MyPC (LMB), click to button **Install to...**, but not on btn, click at 1px higher and this open Windows NT Setup Master, where he select disk to install, and by ENTER install OS, after install click ENTER and reboot, now LuaNT at own disk, and he can give this **Installation Floppy** a second player, he repeat this process... and now you modification everywhere in world!
