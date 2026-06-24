@@ -450,8 +450,6 @@ local function ApplyWinSxSUpdates()
         DbgPrint("LuaNT Update: No pending updates found (only updates folder)")
         return
     end
-
-    DbgPrint("LuaNT Update: Updating system, don't shutdown our PC or data corrupted!")
     
     HAL.gpu.setBackground(0x000080)
     HAL.gpu.setForeground(0xFFFF00)
@@ -462,7 +460,7 @@ local function ApplyWinSxSUpdates()
     wait(2)
 
     local function CopyDirectory(src, dst)
-        if not bootFS.exists(src) then return end
+        if not bootFS.exists(src) or src=="Windows/WinSxS/update/wusig.json" then return end
         
         local srcItems = bootFS.list(src)
         if not srcItems then return end
@@ -473,7 +471,13 @@ local function ApplyWinSxSUpdates()
         
         for _, item in ipairs(srcItems) do
             local srcPath = src .. "/" .. item
-            local dstPath = dst .. "/" .. item
+            local dstPath
+            
+            if src == "Windows/WinSxS" then
+                dstPath = item
+            else
+                dstPath = dst .. "/" .. item
+            end
             
             local isDir = false
             local subItems = bootFS.list(srcPath)
@@ -484,7 +488,6 @@ local function ApplyWinSxSUpdates()
             if isDir then
                 CopyDirectory(srcPath, dstPath)
             else
-                -- Копіюємо файл
                 DbgPrint("LuaNT Update: Copying " .. srcPath .. " -> " .. dstPath)
                 
                 local srcHandle = bootFS.open(srcPath, "rb")
@@ -521,7 +524,7 @@ local function ApplyWinSxSUpdates()
 
     for _, item in ipairs(itemsToCopy) do
         local srcPath = "Windows/WinSxS/" .. item
-        local dstPath = "Windows/" .. item
+        local dstPath = item
         
         if bootFS.isDirectory and bootFS.isDirectory(srcPath) then
             CopyDirectory(srcPath, dstPath)
