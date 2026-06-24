@@ -185,8 +185,20 @@ repeat
             if statusString == "STATUS_SUCCESS" then
                 ntdll.NtDelayExecution() 
             else
-                consolePrint("ERROR: " .. statusString)
+                path = "Windows/" .. args[1]
+                if not path:match("%.lua$") then path = path .. ".lua" end
+                cmdArgs = {}
+                for i = 2, #args do table.insert(cmdArgs, args[i]) end
+                LastSpawnedArgs = cmdArgs
+                pid, statusString = ntdll.NtCreateUserProcess(path, args[1], 8)
+                if statusString == "STATUS_SUCCESS" then
+                    ntdll.NtDelayExecution() 
+                else
+                    consolePrint("ERROR: " .. statusString)
+                end
             end
         end
     end
 until false
+
+if _G.RpcSs then _G.RpcSs.RpcServerUnregisterIf("IConsoleManager") end
