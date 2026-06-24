@@ -1,4 +1,0 @@
-{
-  "name": "Test Build of LuaNT",
-  "files": ["Windows/System32/ntoskrnl.lua"]
-}
