@@ -320,29 +320,127 @@ _G.PsCreateSystemThread("Windows/System32/idle.lua", "System Idle Process", IDLE
 DbgPrint("KE: KiInitializeScheduler - SystemIdleProcess registered at Priority 0.")
 
 -- LuaNT Garbage Collector. Create by RedstoneShell. DO NOT CHANGE OR SYSTEM CAN WORK UNSTABLE
+_G.GCInProgress = false
 function _G.MmZeroThreadMemory(thread)
     if not thread then return end
-    _G.DbgPrint("MM: Freeing resources for Thread: " .. tostring(thread.name) .. " (PID: " .. tostring(thread.pid) .. ")")
-    if thread.env then
-        thread.env["_G"] = nil
-        thread.env.argv = nil
-        thread.env.arg = nil
-        thread.env.LdrLoadDll = nil
-        
-        for k in pairs(thread.env) do
-            thread.env[k] = nil
-        end
-        thread.env = nil
-    end
-    if thread.args then
-        for k in pairs(thread.args) do thread.args[k] = nil end
-        thread.args = nil
-    end
+
+    _G.DbgPrint(
+        "MM: Freeing resources for Thread: "
+        .. tostring(thread.name)
+    )
+
     thread.co = nil
+    thread.args = nil
+    thread.env = nil
+
     for k in pairs(thread) do
         thread[k] = nil
     end
 end
+
+_G.ThreadGC = {
+    Enabled = true,
+    Interval = 100,
+    Counter = 0,
+    MaxCrashes = 1,
+    CrashHistory = {}
+}
+
+function _G.KiCheckThreadHealth(thread)
+    if not thread or not thread.co then return false end
+    
+    local status = coroutine.status(thread.co)
+    
+    if status == "dead" then
+        _G.DbgPrint(string.format("KE: Thread %s (PID: %d) has finished normally.", 
+            thread.name, thread.pid))
+        return "dead"
+    end
+    
+    return "alive"
+end
+
+function _G.KiCleanDeadThreads()
+    if _G.GCInProgress then return 0 end
+    _G.GCInProgress = true
+    
+    if not _G.DispatcherActive then 
+        _G.GCInProgress = false
+        return 0 
+    end
+    
+    local deadThreads = {}
+    
+    for i, thread in ipairs(_G.PspActiveProcessList) do
+        local status = _G.KiCheckThreadHealth(thread)
+        if status == "dead" then
+            table.insert(deadThreads, thread)
+        end
+    end
+    
+    for _, thread in ipairs(deadThreads) do
+        _G.DbgPrint(string.format("KE: GC - Cleaning dead thread %s (PID: %d)", 
+            thread.name, thread.pid))
+        
+        for prio = 0, 31 do
+            for i, t in ipairs(ReadyQueues[prio]) do
+                if t == thread then
+                    table.remove(ReadyQueues[prio], i)
+                    break
+                end
+            end
+        end
+        
+        for i, t in ipairs(_G.PspActiveProcessList) do
+            if t == thread then
+                table.remove(_G.PspActiveProcessList, i)
+                break
+            end
+        end
+        
+        _G.MmZeroThreadMemory(thread)
+    end
+    
+    _G.GCInProgress = false
+    return #deadThreads
+end
+
+function _G.KiHandleCrashedThread(thread, err)
+    if not thread then return end
+    
+    if not _G.ThreadGC.CrashHistory[thread.pid] then
+        _G.ThreadGC.CrashHistory[thread.pid] = 0
+    end
+    _G.ThreadGC.CrashHistory[thread.pid] = _G.ThreadGC.CrashHistory[thread.pid] + 1
+    
+    _G.DbgPrint(string.format("KE: Thread %s crashed (PID: %d) - Error: %s", 
+        thread.name, thread.pid, tostring(err)))
+    
+    if _G.ThreadGC.CrashHistory[thread.pid] >= _G.ThreadGC.MaxCrashes then
+        _G.DbgPrint(string.format("KE: Thread %s (PID: %d) exceeded crash limit - terminating.", 
+            thread.name, thread.pid))
+        _G.PsTerminateThread(thread.pid)
+        _G.ThreadGC.CrashHistory[thread.pid] = nil
+    else
+        for prio = 0, 31 do
+            for i, t in ipairs(ReadyQueues[prio]) do
+                if t == thread then
+                    table.remove(ReadyQueues[prio], i)
+                    if _G.ThreadGC.Enabled then
+                        thread.currentPriority = math.max(0, thread.currentPriority - 1)
+                        table.insert(ReadyQueues[thread.currentPriority], thread)
+                        _G.DbgPrint(string.format("KE: Thread %s (PID: %d) requeued with priority %d", 
+                            thread.name, thread.pid, thread.currentPriority))
+                    end
+                    break
+                end
+            end
+        end
+    end
+end
+
+
+-- END
 
 
 
@@ -931,6 +1029,7 @@ end
 
 local tTable = {}
 local lastRegSave=30
+_G.InThreadResume = false
 while true do
     _G.NTTC=_G.NTTC+1
     local sig, addr, arg1, arg2, arg3, arg4 = computer.pullSignal(0.01)
@@ -951,14 +1050,30 @@ while true do
     -- Threads updates in ntoskrnl.lua, TODO: pullSignal downleveled from 0.2 to 0.01 for minimal freezing of threads
     local nextThread, activePrio = KiSelectNextThread()
     if nextThread then
+        if _G.InThreadResume then
+            _G.DbgPrint("KE: Recursive thread resume detected! Skipping...")
+            goto skip_thread
+        end
+        
+        _G.InThreadResume = true
         nextThread.quantumLeft = nextThread.quantumLeft - 1
         
-        local success, err = coroutine.resume(nextThread.co, sig, addr, arg1, arg2, arg3, arg4)
+        local success, err = xpcall(
+            function()
+                return coroutine.resume(nextThread.co, sig, addr, arg1, arg2, arg3, arg4)
+            end,
+            function(e)
+                return "Thread error: " .. tostring(e) .. "\n" .. debug.traceback()
+            end
+        )
+        
+        _G.InThreadResume = false
         
         if not success then
-            _G.DbgPrint("KE: Thread " .. nextThread.name .. " crashed: " .. tostring(err))
-            table.remove(ReadyQueues[activePrio], 1)
+            _G.KiHandleCrashedThread(nextThread, err)
         elseif coroutine.status(nextThread.co) == "dead" then
+            _G.DbgPrint(string.format("KE: Thread %s (PID: %d) finished normally.", 
+                nextThread.name, nextThread.pid))
             table.remove(ReadyQueues[activePrio], 1)
         else
             if nextThread.quantumLeft <= 0 then
@@ -969,6 +1084,19 @@ while true do
         end
     end
     
+    ::skip_thread::
+    
+    if not _G.GCInProgress then
+        _G.ThreadGC.Counter = _G.ThreadGC.Counter + 1
+        if _G.ThreadGC.Counter >= _G.ThreadGC.Interval then
+            _G.ThreadGC.Counter = 0
+            local cleaned = _G.KiCleanDeadThreads()
+            if cleaned > 0 then
+                _G.DbgPrint(string.format("KE: GC cleaned %d dead threads", cleaned))
+            end
+        end
+    end
+        
     local time = computer.uptime()
     if time>=lastRegSave then regedit.Flush() lastRegSave=time+30 end
 end
