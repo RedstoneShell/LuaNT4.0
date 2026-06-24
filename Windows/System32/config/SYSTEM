@@ -1,0 +1,115 @@
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\mraidnt\Parameters EnableCache 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\mraidnt\Parameters WritePolicy WriteBack
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\mraidnt\Parameters DriverVersion 4.23.03.00
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\mraidnt\Parameters Vendor LSI Logic
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\mraidnt\Parameters NumberOfArrays 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\winupdate Start 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\winupdate Type 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\winupdate ImagePath system32\drivers\winupdate.lua
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\winupdate DependOnService PCI,pci
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\winupdate LastBootGood 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\winupdate Group PPP
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\winupdate ErrorControl 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318} UpperFilters partmgr
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318} LowerFilters EhStorClass
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318} Class DiskDrive
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318} NoInstallClass 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318} Installer32 StorProp.lua,DiskClassInstaller
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318} SilentInstall 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318} ClassDesc @disk.inf,%disk.desc%;Disk drives
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk\DiskGeometry BytesPerSector 512
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk\DiskGeometry Cylinders 512
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk\DiskGeometry SectorsPerTrack 8
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk\DiskGeometry MediaType 12
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk\DiskGeometry TracksPerCylinder 2
+\Software\RedstoneShell\Windows NT\CurrentVersion CurrentVersion 4.0.1.0
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\acpi Start 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\acpi Type 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\acpi ImagePath system32\drivers\acpi.lua
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\acpi DependOnService PCI,pci
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\acpi LastBootGood 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\acpi Group PPP
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\acpi ErrorControl 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\acpi\Parameters Default 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\WUSvc Start 2
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\WUSvc Type 32
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\WUSvc ImagePath Windows/System32/wusvc.lua
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\WUSvc DisplayName Windows Update Checking Service
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\WUSvc Description Simple service to check updates of LuaNT at Update Tracker.
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\WUSvc ErrorControl 3
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Storage Management DeviceName \\\\.\\PhysicalDrive1
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Storage Management UniqueId {416ca0af-51b9-4e26-b1b7-efe98d0e2f9b}
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk\DiskGeometry BytesPerSector 512
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk\DiskGeometry Cylinders 8
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk\DiskGeometry SectorsPerTrack 8
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk\DiskGeometry MediaType 11
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk\DiskGeometry TracksPerCylinder 2
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk DiskAddress 0:0:0:0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk Port 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk UserMaxAlign 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk Bus 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk TargetId 0
+\Software\RedstoneShell\Windows NT\CurrentVersion CurrentVersion 4.0.1.0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk DiskAddress 0:0:0:0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk Port 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk UserMaxAlign 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk Bus 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk TargetId 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\RpcSs Start 2
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\RpcSs Type 32
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\RpcSs ImagePath Windows/System32/RpcSs.lua
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\RpcSs DisplayName Remote Procedure Call (RPC)
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\RpcSs Description Provides process isolation and inter-process communication (IPC).
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\RpcSs ErrorControl 3
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Storage Management DeviceName \\\\.\\PhysicalDrive0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Storage Management UniqueId {7d4355f3-fb65-4bce-8e65-ce8a9fd97b95}
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\pnpmanager Start 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\pnpmanager Type 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\pnpmanager ImagePath system32\drivers\pnpmanager.lua
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\pnpmanager DependOnService PCI,pci
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\pnpmanager LastBootGood 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\pnpmanager Group PnP
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\pnpmanager ErrorControl 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\mraidnt Start 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\mraidnt Type 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\mraidnt ImagePath system32\drivers\mraidnt.lua
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\mraidnt Group SCSI miniport
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\mraidnt DependOnService PCI,pci,disk
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\mraidnt ErrorControl 3
+\Software\RedstoneShell\Windows\CurrentVersion\ACPI WakeOnLAN false
+\Software\RedstoneShell\Windows\CurrentVersion\ACPI Version 1.0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 MatchingDeviceId scsi\\disk_______generic_flash______
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 RemovalPolicy 3
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 LocationInformation PCIROOT(0)#PCI(0100)#PCI(0000)#ATA(C00T00L00)
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 ClassGUID {4d36e967-e325-11ce-bfc1-08002be10318}
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 ServiceName disk
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 PhysicalDriveNumber 1
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 DeviceType 7
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 DriverVersion 1.8.9
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 DriverDesc Apacer ADM III 4MB
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 FriendlyName Small Storage Device (TMPFS)
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 InfPath disk.inf
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 InfSection disk_install
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 DeviceCharacteristics 256
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001 Capabilities 16
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 MatchingDeviceId scsi\\disk_______apacer_hdd_3________
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 RemovalPolicy 3
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 LocationInformation PCIROOT(0)#PCI(0100)#PCI(0000)#ATA(C00T00L00)
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 ClassGUID {4d36e967-e325-11ce-bfc1-08002be10318}
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 ServiceName disk
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 PhysicalDriveNumber 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 DeviceType 7
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 DriverVersion 1.8.9
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 DriverDesc Apacer ADM III 4MB
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 FriendlyName Hard Disk (Tier 3) (4096 KB)
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 InfPath disk.inf
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 InfSection disk_install
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 DeviceCharacteristics 256
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000 Capabilities 16
+\Software\RedstoneShell\Windows\CurrentControlSet\Services\winupdate\Parameters Default 0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Storage Management DeviceName \\\\.\\PhysicalDrive0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk DiskAddress 0:0:0:0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0000\Device Parameters\Disk\DiskGeometry SectorsPerTrack 8
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Storage Management DeviceName \\\\.\\PhysicalDrive1
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk DiskAddress 0:0:0:0
+\Software\RedstoneShell\Windows\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}\0001\Device Parameters\Disk\DiskGeometry SectorsPerTrack 8

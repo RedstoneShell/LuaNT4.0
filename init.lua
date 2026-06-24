@@ -4,7 +4,7 @@ local c = component
 local comp = computer
 local screen = component.list("screen", true)()
 local gpu = screen and component.list("gpu", true)()
-local pc_io = c.proxy(c.list("filesystem")())
+local pc_io = c.proxy(comp.getBootAddress())
 
 pc_io.remove("/ntbootdd.log")
 
@@ -418,6 +418,177 @@ if arg2==211 then
     end
 end
 
+local function ApplyWinSxSUpdates()
+    DbgPrint("LuaNT Update: Checking for pending updates in WinSxS...")
+    
+    local bootFS = pc_io
+    if not bootFS or not bootFS.exists then
+        DbgPrint("LuaNT Update: Boot filesystem not available")
+        return
+    end
+
+    if not bootFS.exists("Windows/WinSxS") then
+        DbgPrint("LuaNT Update: No WinSxS directory found")
+        return
+    end
+
+    local items = bootFS.list("Windows/WinSxS")
+    if not items or #items == 0 then
+        DbgPrint("LuaNT Update: WinSxS is empty")
+        return
+    end
+
+    local hasUpdates = false
+    for _, item in ipairs(items) do
+        if item ~= "updates" then
+            hasUpdates = true
+            break
+        end
+    end
+
+    if not hasUpdates then
+        DbgPrint("LuaNT Update: No pending updates found (only updates folder)")
+        return
+    end
+
+    DbgPrint("LuaNT Update: Updating system, don't shutdown our PC or data corrupted!")
+    
+    HAL.gpu.setBackground(0x000080)
+    HAL.gpu.setForeground(0xFFFF00)
+    HAL.gpu.fill(1, 1, HAL.w, 3, " ")
+    HAL.gpu.set(1, 1, "LuaNT Update: Updating system, don't shutdown our PC or data corrupted!")
+    HAL.gpu.set(1, 2, "Please wait...")
+    
+    wait(2)
+
+    local function CopyDirectory(src, dst)
+        if not bootFS.exists(src) then return end
+        
+        local srcItems = bootFS.list(src)
+        if not srcItems then return end
+        
+        if not bootFS.exists(dst) then
+            pcall(bootFS.makeDirectory, dst)
+        end
+        
+        for _, item in ipairs(srcItems) do
+            local srcPath = src .. "/" .. item
+            local dstPath = dst .. "/" .. item
+            
+            local isDir = false
+            local subItems = bootFS.list(srcPath)
+            if subItems and #subItems > 0 then
+                isDir = true
+            end
+            
+            if isDir then
+                CopyDirectory(srcPath, dstPath)
+            else
+                -- Копіюємо файл
+                DbgPrint("LuaNT Update: Copying " .. srcPath .. " -> " .. dstPath)
+                
+                local srcHandle = bootFS.open(srcPath, "rb")
+                if srcHandle then
+                    local content = ""
+                    while true do
+                        local chunk = bootFS.read(srcHandle, 4096)
+                        if not chunk then break end
+                        content = content .. chunk
+                    end
+                    bootFS.close(srcHandle)
+                    
+                    local dstHandle = bootFS.open(dstPath, "w")
+                    if dstHandle then
+                        bootFS.write(dstHandle, content)
+                        bootFS.close(dstHandle)
+                        DbgPrint("LuaNT Update: Copied " .. item)
+                    else
+                        DbgPrint("LuaNT Update: Failed to write " .. dstPath)
+                    end
+                else
+                    DbgPrint("LuaNT Update: Failed to open " .. srcPath)
+                end
+            end
+        end
+    end
+
+    local itemsToCopy = {}
+    for _, item in ipairs(items) do
+        if item ~= "updates" then
+            table.insert(itemsToCopy, item)
+        end
+    end
+
+    for _, item in ipairs(itemsToCopy) do
+        local srcPath = "Windows/WinSxS/" .. item
+        local dstPath = "Windows/" .. item
+        
+        if bootFS.isDirectory and bootFS.isDirectory(srcPath) then
+            CopyDirectory(srcPath, dstPath)
+        else
+            DbgPrint("LuaNT Update: Copying " .. srcPath .. " -> " .. dstPath)
+            local srcHandle = bootFS.open(srcPath, "rb")
+            if srcHandle then
+                local content = ""
+                while true do
+                    local chunk = bootFS.read(srcHandle, 4096)
+                    if not chunk then break end
+                    content = content .. chunk
+                end
+                bootFS.close(srcHandle)
+                
+                local dstHandle = bootFS.open(dstPath, "w")
+                if dstHandle then
+                    bootFS.write(dstHandle, content)
+                    bootFS.close(dstHandle)
+                    DbgPrint("LuaNT Update: Copied " .. item)
+                else
+                    DbgPrint("LuaNT Update: Failed to write " .. dstPath)
+                end
+            else
+                DbgPrint("LuaNT Update: Failed to open " .. srcPath)
+            end
+        end
+    end
+
+    DbgPrint("LuaNT Update: All updates applied successfully!")
+
+    DbgPrint("LuaNT Update: Removing WinSxS directory...")
+    
+    local function RemoveDirectory(path)
+        if not bootFS.exists(path) then return end
+        
+        local items = bootFS.list(path)
+        if items then
+            for _, item in ipairs(items) do
+                local fullPath = path .. "/" .. item
+                local subItems = bootFS.list(fullPath)
+                if subItems and #subItems > 0 then
+                    RemoveDirectory(fullPath)
+                else
+                    pcall(bootFS.remove, fullPath)
+                end
+            end
+        end
+        pcall(bootFS.remove, path)
+    end
+    
+    RemoveDirectory("Windows/WinSxS")
+    DbgPrint("LuaNT Update: WinSxS removed successfully!")
+    DbgPrint("LuaNT Update: Rebooting system...")
+    HAL.gpu.setBackground(0x000080)
+    HAL.gpu.setForeground(0x00FF00)
+    HAL.gpu.fill(1, 1, HAL.w, 3, " ")
+    HAL.gpu.set(1, 1, "LuaNT Update: System updated successfully!")
+    HAL.gpu.set(1, 2, "Rebooting...")
+    wait(2)
+    
+    computer.shutdown(true)
+end
+
+
+ApplyWinSxSUpdates()
+pc_io.remove("Windows/WinSxS")
 
 DbgPrint("Loading 'ntoskrnl', waiting 3 seconds for initializing OpenComputers hardware...")
 wait(3)

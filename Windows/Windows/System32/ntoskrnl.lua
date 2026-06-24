@@ -74,14 +74,12 @@ if not _G.Mm.NonPagedPool["HKEY_LOCAL_MACHINE\\BCD00000000"] then
     computer.shutdown(false)
 end
 
-regedit.SetValue("\\Software\\RedstoneShell\\Windows NT\\CurrentVersion", "CurrentVersion", "4.0.1.0")
-
 -- NT BCD Config
 DbgPrint("BCD: Parsing Boot Configuration Data entries...")
 
 local bcdPath = "HKEY_LOCAL_MACHINE\\BCD00000000\\Objects\\{current}\\Elements"
 
-local bcdBootLog = regedit.GetValueEx(bcdPath .. "\\BootLog", "ElementData")
+local bcdBootLog = regedit.GetValue(bcdPath .. "\\BootLog", "ElementData")
 if bcdBootLog == 1 or bcdBootLog == true then
     _G.DebugMode = true
     DbgPrint("BCD: Boot Logging enabled by configuration.")
@@ -89,7 +87,7 @@ else
     _G.DebugMode = false
 end
 
-local bcdSafeBoot = regedit.GetValueEx(bcdPath .. "\\SafeBoot", "ElementData")
+local bcdSafeBoot = regedit.GetValue(bcdPath .. "\\SafeBoot", "ElementData")
 if bcdSafeBoot=="true" then
     _G.KeSystemState = "SAFE_BOOT"
     DbgPrint("BCD: WARNING - Windows NT is booting in SAFE MODE (" .. tostring(bcdSafeBoot) .. ")")
@@ -101,7 +99,7 @@ DbgPrint("BCD: Press [F8] for Advanced Boot Options...")
 
 local evapi = _G.LdrLoadDll("Windows/System32/etw.lua")
 
-bcdPath = "Objects\\{current}\\Elements"
+local bcdPath = "Objects\\{current}\\Elements"
 local bootMenuTriggered = false
 
 local signal = { evapi.ReadData(3.0, "key_down") }
@@ -576,18 +574,6 @@ if regedit.GetValue(rpcRegPath, "Start") == nil then
     regedit.SetValue(rpcRegPath, "Description", "Provides process isolation and inter-process communication (IPC).")
 end
 
-rpcRegPath = "\\Software\\RedstoneShell\\Windows\\CurrentControlSet\\Services\\WUSvc"
-
-if regedit.GetValue(rpcRegPath, "Start") == nil then
-    DbgPrint("CM: WUSvc service keys not found. Writing to SYSTEM hive...")
-    regedit.SetValue(rpcRegPath, "Start", 2)
-    regedit.SetValue(rpcRegPath, "Type", 32)         -- 32 = WIN32_OWN_PROCESS
-    regedit.SetValue(rpcRegPath, "ErrorControl", 3)   -- 3 = Critical
-    regedit.SetValue(rpcRegPath, "ImagePath", "Windows/System32/wusvc.lua")
-    regedit.SetValue(rpcRegPath, "DisplayName", "Windows Update Checking Service")
-    regedit.SetValue(rpcRegPath, "Description", "Simple service to check updates of LuaNT at Update Tracker.")
-end
-
 DbgPrint("ntoskrnl: Loading BOOT drivers...")
 for _, file in ipairs(bootDrivers) do
     LoadDriver(file)
@@ -790,11 +776,6 @@ for _, file in ipairs(autoDrivers) do
 end
 
 DbgPrint("ntoskrnl: " .. #manualDrivers .. " manual drivers registered")
-
-bootDrivers = nil
-systemDrivers = nil
-autoDrivers = nil
-manualDrivers = nil
 
 KeDelayExecutionThread(2)
 regedit.Flush()
