@@ -12,6 +12,16 @@ function rpc.RpcServerRegisterIf(interfaceName, methodsTable)
     return true
 end
 
+function rpc.RpcServerUnregisterIf(interfaceName)
+    if not RegisteredInterfaces[interfaceName] then
+        _G.DbgPrint("RPC: ERROR - Interface " .. interfaceName .. " not found.")
+        return false
+    end
+    RegisteredInterfaces[interfaceName] = nil
+    _G.DbgPrint("RPC: Interface '" .. interfaceName .. "' successfully unregistered.")
+    return true
+end
+
 function rpc.RpcCliExecute(interfaceName, methodName, ...)
     local iface = RegisteredInterfaces[interfaceName]
     if not iface then
@@ -33,4 +43,6 @@ function rpc.RpcCliExecute(interfaceName, methodName, ...)
 end
 
 _G.RpcSs = rpc
-return rpc
+repeat
+    coroutine.yield()
+until false
