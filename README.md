@@ -2,6 +2,8 @@
 A Operating System with simple GUI, Launches at minimum 1x 384KB RAM (Tier 2) free 14KB in max usage; for normal use minimum x2 384KB RAM (Tier 2), gets 768KB, free in maximum 266KB.
 Have a Winlogon, drivers, services, Registry, multi-task, Plug-and-Play, WinUpdate (custom system), notepad, Device Manager, Task Manager and Console.
 
+!!WARNING!!: Unstardard installation created, for making LuaNT run without cover at OpenOS, he have own **init.lua** and **ntoskrnl.lua**, for initializing every system. Second HDD disk to install needed for separate LuaNT from OpenOS!
+
 ## How to install this?
 First: Create PC with:
    - Standard components
