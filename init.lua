@@ -1,6 +1,7 @@
 -- Windows NT Boot Loader by RedstoneShell
 
 local c = component
+local comp = computer
 local screen = component.list("screen", true)()
 local gpu = screen and component.list("gpu", true)()
 local pc_io = c.proxy(c.list("filesystem")())
@@ -17,7 +18,9 @@ _G.HAL = {
 _G.DebugMode = true
 _G.DbgPrintToFile = true
 _G.DbgLogFile = "/ntbootdd.log"
-
+local HAL = _G.HAL
+local pcall0=pcall
+local string0=string.format
 _G.DbgPrint = function (text)
     if not HAL.gpu then return end
     if DebugMode then
@@ -30,7 +33,7 @@ _G.DbgPrint = function (text)
     end
     
     if DbgPrintToFile then
-        pcall(function()
+        pcall0(function()
             local bootDisk = component.proxy(computer.getBootAddress())
             if bootDisk and bootDisk.open then
                 local f = bootDisk.open(DbgLogFile, "a")
@@ -74,12 +77,14 @@ function HAL.initVideo()
     end
 end
 
+local print=_G.DbgPrint
 _G.KeBugCheckEx = function (bugCheckCode, bugCode0, bugCode1)
+    print("***STOP:"..bugCheckCode..", BugCode0: "..bugCode0..", BugCode1: "..bugCode1)
     local cpuaddr = "00000000"
     local raw_id = cpuaddr:sub(1, 8):upper()
-    computer.beep(440, 0.3)
-    computer.beep(440, 0.3)
-    computer.beep(440, 0.3)
+    comp.beep(440, 0.3)
+    comp.beep(440, 0.3)
+    comp.beep(440, 0.3)
     HAL.gpu.setBackground(0x0000FF)
     HAL.gpu.setForeground(0xFFFFFF)
     HAL.gpu.fill(1, 1, HAL.w, HAL.h, " ")
@@ -89,7 +94,7 @@ _G.KeBugCheckEx = function (bugCheckCode, bugCode0, bugCode1)
     HAL.gpu.set(5, 9, "Stop codes: "..(bugCode0 or "CTE").." "..(bugCode1 or "CTE"))
     HAL.gpu.set(5,11, "Stack dump for dev-ops:")
     local line_off = 13
-    pcall(function()
+    pcall0(function()
         if type(bugCode0)=="string" then
             for str in bugCode0:gmatch("[^\r\n]+") do
                 HAL.gpu.set(5, line_off, str)
@@ -105,17 +110,17 @@ _G.KeBugCheckEx = function (bugCheckCode, bugCode0, bugCode1)
             end
         end
     end)
-    HAL.gpu.set(5, line_off+2, "CPUID: ".. string.format("OC-LuaCore %s-%s-%s", raw_id:sub(1, 2), raw_id:sub(3, 4), raw_id:sub(5,5)) .." | Kernel Halt.")
+    HAL.gpu.set(5, line_off+2, "CPUID: ".. string0("OC-LuaCore %s-%s-%s", raw_id:sub(1, 2), raw_id:sub(3, 4), raw_id:sub(5,5)) .." | Kernel Halt.")
     local function wait(s)
-        local start = computer.uptime()
+        local start = comp.uptime()
         local duration = s
         while duration > 0 do
-            computer.pullSignal(duration)
-            duration = s - (computer.uptime() - start)
+            comp.pullSignal(duration)
+            duration = s - (comp.uptime() - start)
         end
     end
     wait(10)
-    computer.shutdown(true)
+    comp.shutdown(true)
 end
 
 function _G.errorHandler(e)
