@@ -45,6 +45,10 @@ _G.DbgPrint = function (text)
             end
         end)
     end
+
+    if _G.KeRelayDbgAtSignal then
+        computer.pushSignal("DbgPrintRelayMessage", tostring(text))
+    end
 end
 
 _G._G = _G
@@ -74,6 +78,46 @@ function HAL.initVideo()
         HAL.gpu.setBackground(0x000000)
         HAL.gpu.setForeground(0xFFFFFF)
         HAL.gpu.fill(1, 1, HAL.w, HAL.h, " ")
+    end
+end
+
+local function LoadBootIni()
+    _G.KeRelayDbgAtSignal = false
+    
+    local bootFS = component.proxy(computer.getBootAddress())
+    if not bootFS then
+        DbgPrint("BOOT: No boot filesystem available")
+        return
+    end
+    
+    if not bootFS.exists("/boot.ini") then
+        DbgPrint("BOOT: /boot.ini not found, using defaults")
+        return
+    end
+    
+    local handle, err = bootFS.open("/boot.ini", "r")
+    if not handle then
+        DbgPrint("BOOT: Failed to open /boot.ini: " .. tostring(err))
+        return
+    end
+    
+    local content = ""
+    while true do
+        local chunk = bootFS.read(handle, 512)
+        if not chunk then break end
+        content = content .. chunk
+    end
+    bootFS.close(handle)
+    
+    for line in content:gmatch("[^\r\n]+") do
+        if not line:match("^%s*;") and not line:match("^%s*$") then
+            local key, value = line:match("^%s*([^=]+)%s*=%s*(.-)%s*$")
+            if key and value then
+                if key == "relayDbgAtSignal" then
+                    _G.KeRelayDbgAtSignal = (value:lower() == "true" or value == "1")
+                end
+            end
+        end
     end
 end
 
@@ -135,6 +179,8 @@ local function wait(s)
         duration = s - (computer.uptime() - start)
     end
 end
+
+LoadBootIni()
 
 
 
