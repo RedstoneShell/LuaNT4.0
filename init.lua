@@ -47,7 +47,14 @@ _G.DbgPrint = function (text)
     end
 
     if _G.KeRelayDbgAtSignal then
-        computer.pushSignal("DbgPrintRelayMessage", tostring(text))
+        for address in component.list("computer") do
+            if address ~= computer.address() then
+                local proxy = component.proxy(address)
+                if proxy and proxy.pushSignal then
+                    pcall(proxy.pushSignal, "DbgPrintRelayMessage", tostring(message))
+                end
+            end
+        end
     end
 end
 
