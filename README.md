@@ -1,4 +1,5 @@
 # LuaNT 4.0, A greatest project in OpenComputers (MC 1.12.2) mod
+![Desktop](not_copyable/2026-06-25_23.24.42.png)
 A Operating System with simple GUI, Launches at minimum 1x 384KB RAM (Tier 2) free 14KB in max usage; for normal use minimum x2 384KB RAM (Tier 2), gets 768KB, free in maximum 266KB.
 Have a Winlogon, drivers, services, Registry, multi-task, Plug-and-Play, WinUpdate (custom system), notepad, Device Manager, Task Manager and Console.
 
@@ -18,6 +19,9 @@ but select second disk that you plug in PC without files. And wait for installat
 Fourth: After install, shutdown PC, and remove disk with OpenOS. After that start PC and if you see at booting: "Windows NT Boot Manager", you finally install LuaNT!!!
 Now you can make with he everything, or update with WinUpdate.
 
+Help:
+![Installation Guide](2026-06-25_23.31.07.png)
+
 ## Some help...
 If you don't know how to login, password for Administrator is "admin123", but you can CHANGE he, by start usrman or Start>User Manager, select Administrator, by ^v select Password and ENTER, write own, press < and after reboot, at password "admin123", you can see Login Error.
 
@@ -30,3 +34,15 @@ After, you can give this Floppy to other player, and he install this floppy in o
 
 # How to make drivers and my programs?
 You can make own file by creating in external methods as VSCode by opening <minecraft>/saves/<world>/opencomputers/<UUID of HDD where LuaNT>/path_to_make_file. Or use internal command in cmd.exe as "mkfile <path_for_file_with_name_with_extension>" in next update with "notepad <path> (this works)". For help, read ApiDoc.md.
+
+# Some screens..
+BCD Enter:
+![BCD](not_copyable/2026-06-25_23.23.55.png)
+Debug Log:
+![DbrPrint's](not_copyable/2026-06-25_23.24.24.png)
+Before logon:
+![CSRSS](not_copyable/2026-06-25_23.24.27.png)
+At logon:
+![WinLogOn](not_copyable/2026-06-25_23.24.28.png)
+Shutdown:
+![Shutdwn Phase 1](not_copyable/2026-06-25_23.24.45.png)
