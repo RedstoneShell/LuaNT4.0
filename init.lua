@@ -45,10 +45,6 @@ _G.DbgPrint = function (text)
             end
         end)
     end
-
-    if _G.KeRelayDbgAtSignal then
-        pcall(component.proxy(component.list("modem")()).broadcast, modem, 4010, "DbgPrintRelayMessage", tostring(message))
-    end
 end
 
 _G._G = _G
