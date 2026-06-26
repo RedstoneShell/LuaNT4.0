@@ -406,7 +406,7 @@ crypto.rc2 = {
     end,
     encrypt=function (key, data, key_bits)
         key_bits = key_bits or 128
-        local key_schedule = rc2.expand_key(key, key_bits)
+        local key_schedule = crypto.rc2.expand_key(key, key_bits)
         
         local padded = data
         local pad_len = 8 - (#data % 8)
@@ -419,7 +419,7 @@ crypto.rc2 = {
         local result = {}
         for i = 1, #padded, 8 do
             local block = padded:sub(i, i + 7)
-            local encrypted = rc2.encrypt_block(key_schedule, block)
+            local encrypted = crypto.rc2.encrypt_block(key_schedule, block)
             result[#result + 1] = encrypted
         end
         
@@ -427,7 +427,7 @@ crypto.rc2 = {
     end,
     decrypt=function (key, data, key_bits)
         key_bits = key_bits or 128
-        local key_schedule = rc2.expand_key(key, key_bits)
+        local key_schedule = crypto.rc2.expand_key(key, key_bits)
         
         if #data % 8 ~= 0 then
             error("RC2: encrypted data must be multiple of 8 bytes")
@@ -436,7 +436,7 @@ crypto.rc2 = {
         local result = {}
         for i = 1, #data, 8 do
             local block = data:sub(i, i + 7)
-            local decrypted = rc2.decrypt_block(key_schedule, block)
+            local decrypted = crypto.rc2.decrypt_block(key_schedule, block)
             result[#result + 1] = decrypted
         end
         
@@ -479,7 +479,7 @@ crypto.des = {
             error("DES: plaintext must be 8 bytes")
         end
         
-        local round_keys = des.generate_keys(key)
+        local round_keys = crypto.des.generate_keys(key)
         local block = 0
         for i = 1, 8 do
             block = (block << 8) | string.byte(plaintext, i)
@@ -523,7 +523,7 @@ crypto.des = {
             error("DES: ciphertext must be 8 bytes")
         end
         
-        local round_keys = des.generate_keys(key)=
+        local round_keys = crypto.des.generate_keys(key)
         local block = 0
         for i = 1, 8 do
             block = (block << 8) | string.byte(ciphertext, i)
@@ -577,7 +577,7 @@ crypto.des = {
         local result = {}
         for i = 1, #padded, 8 do
             local block = padded:sub(i, i + 7)
-            result[#result + 1] = des.encrypt_block(key, block)
+            result[#result + 1] = crypto.des.encrypt_block(key, block)
         end
         
         return table.concat(result)
@@ -594,7 +594,7 @@ crypto.des = {
         local result = {}
         for i = 1, #data, 8 do
             local block = data:sub(i, i + 7)
-            result[#result + 1] = des.decrypt_block(key, block)
+            result[#result + 1] = crypto.des.decrypt_block(key, block)
         end
         
         local plaintext = table.concat(result)
@@ -613,9 +613,9 @@ crypto.des = {
         local k2 = key:sub(9, 16)
         local k3 = #key == 24 and key:sub(17, 24) or k1
         
-        local encrypted = des.encrypt(k1, data)
-        encrypted = des.decrypt(k2, encrypted)
-        encrypted = des.encrypt(k3, encrypted)
+        local encrypted = crypto.des.encrypt(k1, data)
+        encrypted = crypto.des.decrypt(k2, encrypted)
+        encrypted = crypto.des.encrypt(k3, encrypted)
         
         return encrypted
     end,
@@ -628,9 +628,9 @@ crypto.des = {
         local k2 = key:sub(9, 16)
         local k3 = #key == 24 and key:sub(17, 24) or k1
         
-        local decrypted = des.decrypt(k3, data)
-        decrypted = des.encrypt(k2, decrypted)
-        decrypted = des.decrypt(k1, decrypted)
+        local decrypted = crypto.des.decrypt(k3, data)
+        decrypted = crypto.des.encrypt(k2, decrypted)
+        decrypted = crypto.des.decrypt(k1, decrypted)
         
         return decrypted
     end
