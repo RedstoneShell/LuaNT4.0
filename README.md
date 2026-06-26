@@ -33,7 +33,7 @@ If you install LuaNT 4.0, you can open a **SetupMgr** and if you install Disk Dr
 After, you can give this Floppy to other player, and he install this floppy in own PC, boot from he. And by open Menu of MyPC (LMB), click to button **Install to...**, but not on btn, click at 1px higher and this open Windows NT Setup Master, where he select disk to install, and by ENTER install OS, after install click ENTER and reboot, now LuaNT at own disk, and he can give this **Installation Floppy** a second player, he repeat this process... and now you modification everywhere in world!
 
 # How to make drivers and my programs?
-You can make own file by creating in external methods as VSCode by opening <minecraft>/saves/<world>/opencomputers/<UUID of HDD where LuaNT>/path_to_make_file. Or use internal command in cmd.exe as "mkfile <path_for_file_with_name_with_extension>" in next update with "notepad <path> (this works)". For help, read ApiDoc.md.
+You can make own file by creating in external methods as VSCode by opening <minecraft>/saves/<world>/opencomputers/<UUID of HDD where LuaNT>/path_to_make_file. Or use internal command in cmd.exe as "notepad <path> (this works, only for edit and if exists)". For help, read ApiDoc.md.
 
 # Some screens..
 BCD Enter:
