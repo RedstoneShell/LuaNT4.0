@@ -74,7 +74,7 @@ if not _G.Mm.NonPagedPool["HKEY_LOCAL_MACHINE\\BCD00000000"] then
     computer.shutdown(false)
 end
 
-regedit.SetValue("\\Software\\RedstoneShell\\Windows NT\\CurrentVersion", "CurrentVersion", "4.0.1.0")
+regedit.SetValue("\\Software\\RedstoneShell\\Windows NT\\CurrentVersion", "CurrentVersion", "4.0.1.1")
 
 -- NT BCD Config
 DbgPrint("BCD: Parsing Boot Configuration Data entries...")
@@ -791,10 +791,6 @@ end
 
 DbgPrint("ntoskrnl: " .. #manualDrivers .. " manual drivers registered")
 
-bootDrivers = nil
-systemDrivers = nil
-autoDrivers = nil
-manualDrivers = nil
 
 KeDelayExecutionThread(2)
 regedit.Flush()
@@ -868,6 +864,8 @@ local function DrawShutdownScreen(statusText, isFinal)
         gpu.set(math.floor(winX + (winW - #statusText)/2), winY + 3, statusText)
     end
 end
+
+
 
 _G.RebootSet=false
 
@@ -1005,6 +1003,36 @@ end
 winlogon.Main(ntwla)
 local wls, explorerTimeUpd = true, nil
 
+-- LuaNT Garbage Collector. Unused variables collector
+bootDrivers = nil
+systemDrivers = nil
+autoDrivers = nil
+manualDrivers = nil
+rpcRegPath=nil
+drivers=nil
+sysBootDisk=nil
+bcdSafeBoot=nil
+bcdPath=nil
+err9=nil
+err10=nil
+bcdBootLog=nil
+evapi=nil
+bootMenuTriggered=nil
+signal=nil
+screen_gdi=nil
+csr_suc=nil
+csrss=nil
+err11=nil
+ntstartargs=nil
+krnl32=nil
+err13=nil
+LoadDriver=nil
+_G.RegisterShutdownDriver=nil
+KiMarkDriveDirty=nil
+ntwla=nil
+err12=nil
+
+
 function KiInterruptDispatch(sig, addr, arg1, arg2, arg3, arg4)
     if _G.PnPManager and _G.PnPManager.PollEvents then
         _G.PnPManager.PollEvents(sig, addr, arg1, arg2, arg3, arg4)
@@ -1016,6 +1044,7 @@ function KiInterruptDispatch(sig, addr, arg1, arg2, arg3, arg4)
             if exp then
                 explorerTimeUpd = exp
                 wls = false
+                winlogon=nil
             end
         end
     elseif sig == "touch" then
@@ -1047,9 +1076,14 @@ _G.HAL.HalQueryRealTimeClock = function (PTIME_FIELDS)
 end
 
 local tTable = {}
+local lastRegSave = 30
+_G.InThreadResume = false
+
+local tTable = {}
 local lastRegSave=30
 _G.InThreadResume = false
 while true do
+    if not component.proxy(computer.getBootAddress()) then KeBugCheckEx("0x0000007B", "INACCESSABLE_BOOT_DEVICE", "") end
     _G.NTTC=_G.NTTC+1
     local sig, addr, arg1, arg2, arg3, arg4 = computer.pullSignal(0.01)
     if sig then
@@ -1068,7 +1102,7 @@ while true do
 
     -- Threads updates in ntoskrnl.lua, TODO: pullSignal downleveled from 0.2 to 0.01 for minimal freezing of threads
     local nextThread, activePrio = KiSelectNextThread()
-    if nextThread then
+    if nextThread and nextThread.co then
         if _G.InThreadResume then
             _G.DbgPrint("KE: Recursive thread resume detected! Skipping...")
             goto skip_thread
