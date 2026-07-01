@@ -588,6 +588,20 @@ if regedit.GetValue(rpcRegPath, "Start") == nil then
     regedit.SetValue(rpcRegPath, "Description", "Simple service to check updates of LuaNT at Update Tracker.")
 end
 
+rpcRegPath = "\\Software\\RedstoneShell\\Windows\\CurrentControlSet\\Services\\Spooler"
+
+if regedit.GetValue(rpcRegPath, "Start") == nil then
+    DbgPrint("CM: Spooler service keys not found. Writing to SYSTEM hive...")
+    regedit.SetValue(rpcRegPath, "Start", 2)
+    regedit.SetValue(rpcRegPath, "Type", 32)
+    regedit.SetValue(rpcRegPath, "ErrorControl", 1)
+    regedit.SetValue(rpcRegPath, "ImagePath", "Windows/System32/spoolsv.lua")
+    regedit.SetValue(rpcRegPath, "DisplayName", "Print Spooler")
+    regedit.SetValue(rpcRegPath, "Description", "Manages print queues and documents")
+    regedit.SetValue(rpcRegPath, "ObjectName", "LocalSystem")
+    regedit.SetValue(rpcRegPath, "DependOnService", "RpcSs")
+end
+
 DbgPrint("ntoskrnl: Loading BOOT drivers...")
 for _, file in ipairs(bootDrivers) do
     LoadDriver(file)
