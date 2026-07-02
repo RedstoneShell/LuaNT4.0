@@ -152,7 +152,8 @@ Returns current running OS version string.
 Example:
 ```lua
 local ok, version = _G.RpcSs.RpcCliExecute("IWindowsUpdate", "GetCurrentVersion")
-if ok then _G.DbgPrint("Current:", version) end
+if ok then _G.DbgPrint("Current:"..version) end
+```
 
 ### IWindowsUpdate.CheckForUpdates(): boolean
 Manually triggers update check. Returns true if update available, false if up to date or error.
