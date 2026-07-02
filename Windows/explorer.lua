@@ -126,6 +126,7 @@ function explorer.Desktop(gdi, gpu, s32, profile)
     s32.DrawIcon(hdc, gdi, 0x555555, gpu.w-19, gpu.h-4, "NoNetwork", "")
     s32.DrawIcon(hdc, gdi, 0x0000A0, 2, 8, "SetupMgr", "Setup Mgr")
     s32.DrawIcon(hdc, gdi, 0x0000A0, 2, 14, "Notepad", "Notepad")
+    s32.DrawIcon(hdc, gdi, 0xAA0000, gpu.w-10, 2, "Minesweeper", "Minesweeper")
     s32.RegisterIcon("MyPC", 2, 2, 5, 4, function(args)
         if args[1]=="OPEN" then explorer.OpenMyPc(gdi, gpu, s32)
         elseif args[1] == "MENU" then
@@ -159,6 +160,9 @@ function explorer.Desktop(gdi, gpu, s32, profile)
     end)
     s32.RegisterIcon("Notepad", 2, 14, 5, 4, function(args)
         if args[1]=="OPEN" then _G.PsCreateSystemThread("Windows/notepad.lua", "notepad.exe", 8, { name="USER", group="USER" }) end
+    end)
+    s32.RegisterIcon("Minesweeper", gpu.w-10, 2, 5, 4, function(args)
+        if args[1]=="OPEN" then _G.PsCreateSystemThread("Windows/System32/winmine.lua", "winmine.exe", 8, { name="USER", group="USER" }) end
     end)
 end
 
