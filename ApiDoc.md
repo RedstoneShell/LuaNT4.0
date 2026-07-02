@@ -145,6 +145,7 @@ Example:
 ```lua
 local ok, version = _G.RpcSs.RpcCliExecute("IWindowsUpdate", "GetLatestVersion")
 if ok then _G.DbgPrint("Latest:", version) end
+```
 
 ### IWindowsUpdate.GetCurrentVersion(): string
 Returns current running OS version string.
