@@ -21,7 +21,6 @@ function winlogon.RedrawLogonBox()
     gdi.SetTextColor(hdc, 0xFFFFFF)
     gdi.TextOut(hdc, winX+2, winY+2, "Logon Information")
     
-    gdi.SetTextColor(hdc, 0x000000)
     gdi.TextOut(hdc, winX+4, winY+5, "Enter your credentials to log on.")
     
     local userCursor = (inputStage == "username") and "_" or ""
