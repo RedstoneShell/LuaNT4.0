@@ -56,7 +56,7 @@ You can make own file by creating in external methods as VSCode by opening <mine
 Now u can make files with Notepad from desktop, and print at OpenPrinter if u download this add-on for OpenComputers.
 
 # What doing, if LuaNT crash with BSOD?
-Tip: DON'T LAUNCH COMPUTER AFTER CRASH, THIS DESTROY LOG FOR ANALYZING, WHAT WRONG WITH COMPUTER
+Tip: DON'T LAUNCH COMPUTER AFTER CRASH, THIS DESTROY LOG FOR ANALYZING, WHAT WRONG WITH COMPUTER, IF YOU SEE BSOD, IMMEDANTLY SHUTDOWN COMPUTER
 
 After TIP, DONT'T PLS LAUNCH COMPUTER. Remove disk with LuaNT and place OpenOS disk, now start computer and in console paste this **"pastebin get -f 49HPZMkw LuaNTDebugger.lua"** and after success install insert disk with LuaNT back and enter **"LuaNTDebugger"** and type **1** and follow instructions, after, type **2**, and wait... after, Debugger find and displays BSOD data, example:
 BSOD...:
