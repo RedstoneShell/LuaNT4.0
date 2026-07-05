@@ -18,6 +18,8 @@ Second: Install OpenOS.
 Third: After OpenOS installation, run in command prompt: "pastebin get -f Kv80QkZG luantinstall.lua", and after download enter "luantinstall", and follow all steps in installer,
 but select second disk that you plug in PC without files. And wait for installation.
 
+**NOW PLEASE READ: GettingStarted.md**
+
 Fourth: After install, shutdown PC, and remove disk with OpenOS. After that start PC and if you see at booting: "Windows NT Boot Manager", you finally install LuaNT!!!
 Now you can make with he everything, or update with WinUpdate.
 
