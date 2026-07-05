@@ -7,6 +7,9 @@ NOT, he NOT freezing, you just NOT SEE initialization progress, if you need to s
 
 ### Why he fails at Read-Only disk?
 Check, if you NOT INSTALL LuaNT at READ-ONLY disk, or he crash, LuaNT can work with external Read-Only floppies and disks.
+WARNING: LuaNT can Write/Read at extrenal **filesystem** devices, by using **ntdll.lua**
 
+### SMS? Now i CAN CHATTING??
+NO, bro... is a Systems Management Servers, or simple: App Market, here programs, drivers and other things, that here on GitHub agreed by me(RedstoneShell), you can see list of programs at my GitHub
 
 ### END
