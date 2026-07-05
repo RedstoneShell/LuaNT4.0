@@ -1,0 +1,1 @@
+Hello from RedstoneShell, you download test script, if you see this, Systems Management Server works propertly!
