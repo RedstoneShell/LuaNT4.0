@@ -67,6 +67,18 @@ shell32.Icons = {
         " \\-| ",
         "   | ",
         "  ---"
+    },
+    IE = {
+        "| +===",
+        "| |___",
+        "| |   ",
+        "| +==="
+    },
+    AppCenter={
+        "/----|",
+        "| Lua|",
+        "| SMS|",
+        "+====+"
     }
 }
 
@@ -97,16 +109,31 @@ end
 function shell32.DrawIcon(hdc, gdi, bkColor, x, y, iconName, label)
     local icon = shell32.Icons[iconName]
     if not icon then return false end
-    gdi.SetTextColor(hdc, bkColor)
-    for i, line in ipairs(icon) do gdi.TextOut(hdc, x, y+i-1, line) end
-    if label then
+    
+    for i, line in ipairs(icon) do
+        gdi.SetTextColor(hdc, bkColor)
+        gdi.TextOut(hdc, x, y + i - 1, line)
+    end
+    
+    if label and #label>5 then
+        local labelWidth = #label
+        local iconWidth = 0
+        for _, line in ipairs(icon) do
+            if #line > iconWidth then iconWidth = #line end
+        end
+        
+        local centerX = x + math.floor((iconWidth - labelWidth) / 2)
+        if centerX < 0 then centerX = 0 end
+        
+        gdi.SetTextColor(hdc, bkColor)
+        gdi.TextOut(hdc, centerX, y + #icon, label)
+    else
         gdi.SetTextColor(bkColor)
         gdi.TextOut(hdc, x-1, y+#icon, label)
     end
-
+    
     return true
 end
-
 function shell32.HandleClick(clickX, clickY, button)
     local cT = computer.uptime()
     for name, icon in pairs(shell32.DeskIcon) do

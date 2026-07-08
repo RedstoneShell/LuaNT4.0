@@ -1,57 +1,121 @@
 local kernel32 = {}
 
-function kernel32.NtOpenFile(path, mode)
-    local lett = path.sub(1, 2)
-    local intPath = path.sub(3)
-    local dev = _G.Mm.NonPagedPool[_G.Drives[lett]]
-    if not dev then
-        return nil, "STATUS_OBJECT_NAME_NOT_FOUND"
-    end
-    local fd, err = dev.open(intPath, mode or "r")
-    if not fd then return nil, err end
-    _G.LastHandle=_G.LastHandle+4
-    _G.HandleTable[_G.LastHandle] = {
-        fd=fd,
-        dev=dev,
-        path=path
-    }
-end
-
 function kernel32.GetCurrentProcessId()
     return 50
 end
 
-function kernel32.KeQueryTickCount()
-    return _G.NTTC
+function kernel32.lstrlen(lpString)
+    return #lpString
 end
 
-function kernel32.NtReadFile(handle, bytes)
-    local obj = _G.HandleTable[handle]
-    if not obj then return nil, "STATUS_INVALID_HANDLE" end
-    return obj.dev.read(obj.fd, bytes)
-end
-
-function kernel32.NtWriteFile(handle, data)
-    local obj = _G.HandleTable[handle]
-    if not obj then return nil, "STATUS_INVALID_HANDLE" end
-    return obj.dev.write(obj.fd, data)
-end   
-
-function kernel32.NtClose(handle)
-    local obj = _G.HandleTable[handle]
-    if obj then
-        obj.dev.close(obj.fd)
-        _G.HandleTable[handle]=nil
-        return "STATUS_SUCCESS"
+function kernel32.lstrcpy(lpString1, lpString2)
+    local function unsafe_copy()
+        if type(lpString1) ~= "table" then
+            _G.DbgPrint("KERNEL32.StrCpy: Access Violation: lpString1 is not a buffer")
+        end
+        local src_str = tostring(lpString2 or "")
+        for k in pairs(lpString1) do
+            lpString1[k] = nil
+        end
+        for i = 1, #src_str do
+            lpString1[i] = string.sub(src_str, i, i)
+        end
+        lpString1[#src_str + 1] = "\0"
+        return lpString1
     end
-    return "STATUS_INVALID_HANDLE"
+
+    local success, result = pcall(unsafe_copy)
+    
+    if success then
+        return result
+    else
+        return nil
+    end
 end
 
-function kernel32.NtQueryDirectoryFile(path)
-    local lett, intPath = path:sub(1,2), path:sub(3)
-    local dev = _G.Mm.NonPagedPool[_G.Drives[lett]]
-    if not dev then return nil, "STATUS_NO_SUCH_DEVICE" end
-    return dev.list(intPath)
+function kernel32.lstrcpyn(lpString1, lpString2, iMaxLength)
+    local function unsafe_copy()
+        if type(lpString1) ~= "table" then
+            _G.DbgPrint("KERNEL32.StrCpyN: Access Violation: lpString1 is not a buffer")
+            return nil
+        end
+        
+        if type(iMaxLength) ~= "number" or iMaxLength <= 0 then
+            return lpString1
+        end
+
+        local src_str = tostring(lpString2 or "")
+        
+        for k in pairs(lpString1) do
+            lpString1[k] = nil
+        end
+        
+        local max_chars_to_copy = iMaxLength - 1
+        local actual_len = math.min(#src_str, max_chars_to_copy)
+        
+        for i = 1, actual_len do
+            lpString1[i] = string.sub(src_str, i, i)
+        end
+        
+        lpString1[actual_len + 1] = "\0"
+        
+        return lpString1
+    end
+
+    local success, result = pcall(unsafe_copy)
+    
+    if success then
+        return result
+    else
+        return nil
+    end
+end
+
+function kernel32.lstrcat(lpString1, lpString2)
+    local function unsafe_copy()
+        if type(lpString1) ~= "table" then
+            _G.DbgPrint("KERNEL32.StrCat: Access Violation: lpString1 is not a buffer")
+            return nil
+        end
+        
+        local src_str = tostring(lpString2 or "")
+        
+        local start_index = 1
+        for i = 1, #lpString1 do
+            if lpString1[i] == "\0" then
+                start_index = i
+                break
+            end
+        end
+
+        if start_index == 1 and lpString1[1] ~= "\0" then
+            start_index = #lpString1 + 1
+        end
+
+        for i = 1, #src_str do
+            local target_pos = start_index + i - 1
+            lpString1[target_pos] = string.sub(src_str, i, i)
+        end
+        
+        local final_null_pos = start_index + #src_str
+        lpString1[final_null_pos] = "\0"
+        
+        local tail = final_null_pos + 1
+        while lpString1[tail] ~= nil do
+            lpString1[tail] = nil
+            tail = tail + 1
+        end
+        
+        return lpString1
+    end
+
+    local success, result = pcall(unsafe_copy)
+    
+    if success then
+        return result
+    else
+        return nil
+    end
 end
 
 return kernel32
