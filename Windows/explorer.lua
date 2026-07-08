@@ -34,13 +34,13 @@ function explorer.Desktop(gdi, gpu, s32, profile)
             gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
             gdi.PatBlt(hdc, mX, mY, 2, mH, gdi.PATCOPY)
             
-            gdi.SetTextColor(hdc, 0x000000)
+            gdi.SetTextColor(hdc, 0xFFFFFF)
             gdi.SetBkColor(hdc, 0xC0C0C0)
             gdi.TextOut(hdc, mX + 3, mY + 1, "Command Prompt")
             gdi.TextOut(hdc, mX + 3, mY + 2, "Task Manager  ")
             gdi.TextOut(hdc, mX + 3, mY + 3, "Device Manager")
             gdi.TextOut(hdc, mX + 3, mY + 4, "User Manager  ")
-            gdi.TextOut(hdc, mX + 3, mY + 6, "Run...        ")
+            gdi.TextOut(hdc, mX + 3, mY + 6, "File Manager  ")
             gdi.TextOut(hdc, mX + 3, mY + 7, "──────────────")
             gdi.TextOut(hdc, mX + 3, mY + 9, "Shut Down...  ")
 
@@ -73,6 +73,14 @@ function explorer.Desktop(gdi, gpu, s32, profile)
                     _G.StartMenuOpen = false
                     DrawStartMenu(false)
                     _G.PsCreateSystemThread("Windows/System32/usrmgr.lua", "usrmgr.exe", 8, { name = "Administrator", group = "ADMINS" })
+                end
+            end)
+
+            s32.RegisterIcon("Start_MyComputer", mX + 3, mY + 6, 12, 1, function(a)
+                if a[1] == "OPEN" then
+                    _G.StartMenuOpen = false
+                    DrawStartMenu(false)
+                    _G.PsCreateSystemThread("Windows/explorer_n.lua", "explorer.exe", 8, { name = "Administrator", group = "ADMINS" })
                 end
             end)
             
@@ -122,11 +130,13 @@ function explorer.Desktop(gdi, gpu, s32, profile)
         end
     end)
     KeDelayExecutionThread(1)
-    s32.DrawIcon(hdc, gdi, 0xFFFFFF, 2, 2, "MyPC", "Computer")
+    s32.DrawIcon(hdc, gdi, 0xFFFFFF, 2, 2, "MyPC", "My PC")
     s32.DrawIcon(hdc, gdi, 0x555555, gpu.w-19, gpu.h-4, "NoNetwork", "")
     s32.DrawIcon(hdc, gdi, 0x0000A0, 2, 8, "SetupMgr", "Setup Mgr")
     s32.DrawIcon(hdc, gdi, 0x0000A0, 2, 14, "Notepad", "Notepad")
+    s32.DrawIcon(hdc, gdi, 0x0000A0, 10, 2, "AppCenter", "SMS")
     s32.DrawIcon(hdc, gdi, 0xAA0000, gpu.w-10, 2, "Minesweeper", "Minesweeper")
+    s32.DrawIcon(hdc, gdi, 0x000055, gpu.w-10, 8, "IE", "Internet Explorer")
     s32.RegisterIcon("MyPC", 2, 2, 5, 4, function(args)
         if args[1]=="OPEN" then explorer.OpenMyPc(gdi, gpu, s32)
         elseif args[1] == "MENU" then
@@ -158,11 +168,17 @@ function explorer.Desktop(gdi, gpu, s32, profile)
     s32.RegisterIcon("SetupMgr", 2, 8, 6, 4, function(args)
         if args[1] == "OPEN" then explorer.OpenSetupMgr(gdi, gpu, s32) end
     end)
+    s32.RegisterIcon("AppCenter", 10, 2, 6, 4, function(args)
+        if args[1] == "OPEN" then _G.PsCreateSystemThread("Windows/System32/sms.lua", "sms.exe", 8, { name="USER", group="USER" }) end
+    end)
     s32.RegisterIcon("Notepad", 2, 14, 5, 4, function(args)
         if args[1]=="OPEN" then _G.PsCreateSystemThread("Windows/notepad.lua", "notepad.exe", 8, { name="USER", group="USER" }) end
     end)
     s32.RegisterIcon("Minesweeper", gpu.w-10, 2, 5, 4, function(args)
         if args[1]=="OPEN" then _G.PsCreateSystemThread("Windows/System32/winmine.lua", "winmine.exe", 8, { name="USER", group="USER" }) end
+    end)
+    s32.RegisterIcon("IE", gpu.w-10, 8, 5, 4, function(args)
+        if args[1]=="OPEN" then _G.PsCreateSystemThread("Windows/System32/IEXPLORE.lua", "IEXPLORE.EXE", 8, { name="USER", group="USER" }) end
     end)
 end
 
