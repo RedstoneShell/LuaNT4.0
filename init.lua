@@ -475,7 +475,7 @@ local function ApplyWinSxSUpdates()
     end
 
     local items = bootFS.list("Windows/WinSxS")
-    if not items or #items<=2 then
+    if not items or #items==1 then
         DbgPrint("LuaNT Update: WinSxS is empty")
         return
     end
