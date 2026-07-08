@@ -74,7 +74,7 @@ if not _G.Mm.NonPagedPool["HKEY_LOCAL_MACHINE\\BCD00000000"] then
     computer.shutdown(false)
 end
 
-regedit.SetValue("\\Software\\RedstoneShell\\Windows NT\\CurrentVersion", "CurrentVersion", "4.0.1.1")
+regedit.SetValue("\\Software\\RedstoneShell\\Windows NT\\CurrentVersion", "CurrentVersion", "4.0.1.2")
 
 -- NT BCD Config
 DbgPrint("BCD: Parsing Boot Configuration Data entries...")
