@@ -1,14 +1,12 @@
 {
-  "latest_version": "4.0.1.2",
+  "latest_version": "4.0.1.3",
   "files": [
     "Windows/System32/ntoskrnl.lua",
-    "Windows/explorer_n.lua",
-    "Windows/System32/IEXPLORE.lua",
-    "Windows/System32/wininet.lua",
-    "Windows/System32/kernel32.lua",
-    "Windows/System32/rshtml.lua",
-    "Windows/System32/shell32.lua",
-    "Windows/System32/sms.lua",
-    "Windows/explorer.lua"
+    "Windows/explorer.lua",
+    "Windows/System32/gdi32.lua",
+    "Windows/System32/dhcpadmn.lua",
+    "Windows/System32/dhcpssvc.lua",
+    "Windows/System32/robocopy.lua",
+    "Windows/System32/esent.lua"
   ]
 }
