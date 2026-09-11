@@ -25,7 +25,7 @@ function explorer.Desktop(gdi, gpu, s32, profile)
 
     local function DrawStartMenu(open)
         local hdc = gdi.GetDC(0)
-        local mX, mY, mW, mH = 2, (_G.HAL.h or gpu.h) - 17, 20, 12
+        local mX, mY, mW, mH = 2, (_G.HAL.h or gpu.h) - 19, 20, 14  -- трохи вище, бо додався пункт
         
         if open then
             gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xC0C0C0))
@@ -36,13 +36,15 @@ function explorer.Desktop(gdi, gpu, s32, profile)
             
             gdi.SetTextColor(hdc, 0xFFFFFF)
             gdi.SetBkColor(hdc, 0xC0C0C0)
-            gdi.TextOut(hdc, mX + 3, mY + 1, "Command Prompt")
-            gdi.TextOut(hdc, mX + 3, mY + 2, "Task Manager  ")
-            gdi.TextOut(hdc, mX + 3, mY + 3, "Device Manager")
-            gdi.TextOut(hdc, mX + 3, mY + 4, "User Manager  ")
-            gdi.TextOut(hdc, mX + 3, mY + 6, "File Manager  ")
-            gdi.TextOut(hdc, mX + 3, mY + 7, "──────────────")
-            gdi.TextOut(hdc, mX + 3, mY + 9, "Shut Down...  ")
+            gdi.TextOut(hdc, mX + 3, mY + 1,  "Command Prompt")
+            gdi.TextOut(hdc, mX + 3, mY + 2,  "Task Manager  ")
+            gdi.TextOut(hdc, mX + 3, mY + 3,  "Device Manager")
+            gdi.TextOut(hdc, mX + 3, mY + 4,  "User Manager  ")
+            gdi.TextOut(hdc, mX + 3, mY + 6,  "File Manager  ")
+            gdi.TextOut(hdc, mX + 3, mY + 7,  "──────────────")
+            gdi.TextOut(hdc, mX + 3, mY + 8,  "Run...        ")
+            gdi.TextOut(hdc, mX + 3, mY + 9,  "Color Setup...")
+            gdi.TextOut(hdc, mX + 3, mY + 10, "Shut Down...  ")
 
             s32.RegisterIcon("Start_CMD", mX + 3, mY + 1, 14, 1, function(a)
                 if a[1] == "OPEN" then
@@ -84,7 +86,23 @@ function explorer.Desktop(gdi, gpu, s32, profile)
                 end
             end)
             
-            s32.RegisterIcon("Start_Shutdown", mX + 3, mY + 9, 12, 1, function(a)
+            s32.RegisterIcon("Start_Run", mX + 3, mY + 8, 12, 1, function(a)
+                if a[1] == "OPEN" then
+                    _G.StartMenuOpen = false
+                    DrawStartMenu(false)
+                    explorer.RunDialog(gdi, gpu, s32)
+                end
+            end)
+
+            s32.RegisterIcon("Start_Color", mX + 3, mY + 9, 13, 1, function(a)
+                if a[1] == "OPEN" then
+                    _G.StartMenuOpen = false
+                    DrawStartMenu(false)
+                    explorer.ColorSetup(gdi, gpu, s32)
+                end
+            end)
+        
+            s32.RegisterIcon("Start_Shutdown", mX + 3, mY + 10, 12, 1, function(a)
                 if a[1] == "OPEN" then
                     _G.StartMenuOpen = false
                     DrawStartMenu(false)
@@ -117,7 +135,9 @@ function explorer.Desktop(gdi, gpu, s32, profile)
             s32.UnregIcon("Start_TaskMgr", mX + 3, mY + 2)
             s32.UnregIcon("Start_DevMgr", mX + 3, mY + 3)
             s32.UnregIcon("Start_UserMgr", mX + 3, mY + 4)
-            s32.UnregIcon("Start_Shutdown", mX + 3, mY + 9)
+            s32.UnregIcon("Start_Run", mX + 3, mY + 8)
+            s32.UnregIcon("Start_Color", mX + 3, mY + 9)
+            s32.UnregIcon("Start_Shutdown", mX + 3, mY + 10)
             if s32.DrawDesktopIcons then s32.DrawDesktopIcons() end
         end
     end
@@ -187,7 +207,7 @@ function explorer.ShellExecute(commandLine)
     
     DbgPrint("SHELL32: ShellExecute attempting to start: " .. commandLine)
     
-    local appPathKey = "\\Software\\RedstoneShell\\Windows\\CurrentVersion\\App Paths\\" .. commandLine
+    local appPathKey = "\\Software\\RedstoneShell\\Windows\\CurrentVersion\\App_Paths\\" .. commandLine
     local customPath = _G.regedit0.GetValue(appPathKey, "Path")
     if customPath and component.proxy(computer.getBootAddress()).exists(customPath) then
         DbgPrint("SHELL32: Program found via App Paths registry: " .. customPath)
@@ -972,6 +992,301 @@ function explorer.OpenMyPc(gdi, gpu, s32)
             explorer.RegisterMenu(clickX, clickY, {"Open", "Explore", "Format...", "Properties"})
         end
     end)
+end
+
+function explorer.RunDialog(gdi, gpu, s32)
+    local hdc = gdi.GetDC(0)
+    local w, h = 40, 7
+    local x = math.floor((explorer.screen.width - w) / 2)
+    local y = math.floor((explorer.screen.height - h) / 2)
+
+    local input = ""
+
+    local function redraw()
+        -- Фон вікна
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xC0C0C0))
+        gdi.PatBlt(hdc, x, y, w, h, gdi.PATCOPY)
+
+        -- Рамка 3D
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xFFFFFF))
+        gdi.PatBlt(hdc, x, y, w, 1, gdi.PATCOPY)
+        gdi.PatBlt(hdc, x, y, 1, h, gdi.PATCOPY)
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x555555))
+        gdi.PatBlt(hdc, x + w - 1, y, 1, h, gdi.PATCOPY)
+        gdi.PatBlt(hdc, x, y + h - 1, w, 1, gdi.PATCOPY)
+
+        -- Заголовок
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
+        gdi.PatBlt(hdc, x + 1, y + 1, w - 2, 1, gdi.PATCOPY)
+        gdi.SetTextColor(hdc, 0xFFFFFF)
+        gdi.SetBkColor(hdc, 0x000080)
+        gdi.TextOut(hdc, x + 2, y + 1, "Run")
+
+        -- Текст
+        gdi.SetTextColor(hdc, 0x000000)
+        gdi.SetBkColor(hdc, 0xC0C0C0)
+        gdi.TextOut(hdc, x + 2, y + 3, "Type the name of a program, and")
+        gdi.TextOut(hdc, x + 2, y + 4, "LuaNT will open it for you.")
+
+        -- Поле вводу
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xFFFFFF))
+        gdi.PatBlt(hdc, x + 2, y + 5, w - 4, 1, gdi.PATCOPY)
+        gdi.SetTextColor(hdc, 0x000000)
+        gdi.SetBkColor(hdc, 0xFFFFFF)
+        gdi.TextOut(hdc, x + 3, y + 5, input .. "_")
+    end
+
+    redraw()
+
+    repeat
+        local signal = { computer.pullSignal(0.1) }
+        local event = signal[1]
+
+        if event == "key_down" then
+            local char, code = signal[3], signal[4]
+
+            if code == 28 then  -- ENTER
+                if #input > 0 then
+                    -- ===== ПРЯМИЙ ЗАПУСК ЧЕРЕЗ PsCreateSystemThread =====
+                    local fs = component.proxy(computer.getBootAddress())
+                    local path = input
+
+                    -- Нормалізуємо шлях: прибираємо слеш на початку, якщо є
+                    path = path:gsub("^/", "")
+
+                    -- Якщо не вказано розширення, додаємо .lua
+                    if not path:match("%.lua$") then
+                        path = path .. ".lua"
+                    end
+
+                    -- Шукаємо файл у кількох місцях
+                    local foundPath = nil
+                    local searchPaths = {
+                        path,                          -- як ввели
+                        "Windows/System32/" .. path,   -- System32
+                        "Windows/" .. path,            -- Windows
+                        "Program Files/" .. path,      -- Program Files
+                    }
+
+                    for _, tryPath in ipairs(searchPaths) do
+                        if fs.exists(tryPath) then
+                            foundPath = tryPath
+                            break
+                        end
+                    end
+
+                    if foundPath then
+                        DbgPrint("RUN: Starting " .. foundPath)
+                        local thread = _G.PsCreateSystemThread(foundPath, input, 8,
+                            { name = "Administrator", group = "ADMINS" })
+                        if not thread then
+                            DbgPrint("RUN: Failed to create thread for " .. foundPath)
+                        end
+                    else
+                        DbgPrint("RUN: File not found: " .. input)
+                        -- Можна показати вікно помилки через winerror
+                        if _G.RpcSs then
+                            _G.RpcSs.RpcCliExecute("IErrorHandler", "ShowError",
+                                "Run", "File Not Found",
+                                "Cannot find the file '" .. input .. "'",
+                                "SHELL32")
+                        end
+                    end
+                end
+                return
+
+            elseif code == 203 then  -- <
+                return
+
+            elseif code == 14 then  -- BACKSPACE
+                if #input > 0 then
+                    input = input:sub(1, -2)
+                end
+
+            elseif char >= 32 and char <= 126 and #input < w - 6 then
+                input = input .. string.char(char)
+            end
+
+            redraw()
+        end
+    until false
+end
+
+-- ===== Color Setup Dialog =====
+function explorer.ColorSetup(gdi, gpu, s32)
+    local hdc = gdi.GetDC(0)
+    local w, h = 44, 12
+    local x = math.floor((explorer.screen.width - w) / 2)
+    local y = math.floor((explorer.screen.height - h) / 2)
+
+    -- Читаємо поточний режим з screen.ini
+    local currentMode = 2  -- за замовчуванням 256bit
+    local fs = component.proxy(computer.getBootAddress())
+    local iniPath = "Windows/System32/screen.ini"
+
+    if fs.exists(iniPath) then
+        local file = fs.open(iniPath, "r")
+        if file then
+            local content = fs.read(file, math.huge) or ""
+            fs.close(file)
+            local mode = content:match("screen=(%d+)")
+            if mode then currentMode = tonumber(mode) end
+        end
+    end
+
+    local modes = {
+        { id = 0, name = "Monochrome (1-bit)",  desc = "Black & White only" },
+        { id = 1, name = "16 colors (4-bit)",   desc = "Classic CGA palette" },
+        { id = 2, name = "256 colors (8-bit)",  desc = "Full color palette" }
+    }
+
+    local selected = currentMode + 1  -- 1-based index
+    local statusText = "Current: " .. modes[selected].name
+
+    local function SaveMode(modeId)
+        local file = fs.open(iniPath, "w")
+        if file then
+            fs.write(file, "screen=" .. tostring(modeId) .. "\n")
+            fs.close(file)
+            DbgPrint("COLOR: Saved screen=" .. tostring(modeId) .. " to " .. iniPath)
+            return true
+        end
+        return false
+    end
+
+    local function DrawDialog()
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xC0C0C0))
+        gdi.PatBlt(hdc, x, y, w, h, gdi.PATCOPY)
+
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xFFFFFF))
+        gdi.PatBlt(hdc, x, y, w, 1, gdi.PATCOPY)
+        gdi.PatBlt(hdc, x, y, 1, h, gdi.PATCOPY)
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x808080))
+        gdi.PatBlt(hdc, x, y + h - 1, w, 1, gdi.PATCOPY)
+        gdi.PatBlt(hdc, x + w - 1, y, 1, h, gdi.PATCOPY)
+
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
+        gdi.PatBlt(hdc, x + 1, y + 1, w - 2, 1, gdi.PATCOPY)
+        gdi.SetTextColor(hdc, 0xFFFFFF)
+        gdi.SetBkColor(hdc, 0x000080)
+        gdi.TextOut(hdc, x + 2, y + 1, " Display Properties - Color Setup")
+        gdi.SetTextColor(hdc, 0xFF0000)
+        gdi.TextOut(hdc, x + w - 4, y + 1, "[X]")
+
+        gdi.SetTextColor(hdc, 0x000000)
+        gdi.SetBkColor(hdc, 0xC0C0C0)
+        gdi.TextOut(hdc, x + 2, y + 3, "Select color depth for this display:")
+        gdi.TextOut(hdc, x + 2, y + 4, "──────────────────────────────────")
+
+        for i, mode in ipairs(modes) do
+            local lineY = y + 5 + i
+            local marker = (i == selected) and "> " or "  "
+
+            if i == selected then
+                gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
+                gdi.PatBlt(hdc, x + 2, lineY, w - 4, 1, gdi.PATCOPY)
+                gdi.SetTextColor(hdc, 0xFFFFFF)
+            else
+                gdi.SetTextColor(hdc, 0x000000)
+            end
+
+            gdi.TextOut(hdc, x + 3, lineY,
+                marker .. mode.name .. " - " .. mode.desc)
+        end
+
+        gdi.SetTextColor(hdc, 0x000000)
+        gdi.SetBkColor(hdc, 0xC0C0C0)
+        gdi.TextOut(hdc, x + 2, y + h - 4, "Status: " .. statusText:sub(1, w - 10))
+
+        local btnY = y + h - 2
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xE0E0E0))
+        gdi.PatBlt(hdc, x + w - 22, btnY, 9, 2, gdi.PATCOPY)
+        gdi.PatBlt(hdc, x + w - 11, btnY, 9, 2, gdi.PATCOPY)
+        gdi.SetTextColor(hdc, 0x000000)
+        gdi.SetBkColor(hdc, 0xE0E0E0)
+        gdi.TextOut(hdc, x + w - 21, btnY, "[  OK  ]")
+        gdi.TextOut(hdc, x + w - 10, btnY, "[Cancel]")
+    end
+
+    DrawDialog()
+    coroutine.yield()
+
+    while true do
+        local signal = { computer.pullSignal(0.2) }
+        local event = signal[1]
+
+        if event == "key_down" then
+            local char, code = signal[3], signal[4]
+
+            if code == 203 then  -- <
+                return
+
+            elseif code == 200 then  -- UP
+                if selected > 1 then
+                    selected = selected - 1
+                    statusText = "Selected: " .. modes[selected].name
+                    DrawDialog()
+                end
+
+            elseif code == 208 then  -- DOWN
+                if selected < #modes then
+                    selected = selected + 1
+                    statusText = "Selected: " .. modes[selected].name
+                    DrawDialog()
+                end
+
+            elseif code == 28 then  -- ENTER
+                local modeId = modes[selected].id
+                if SaveMode(modeId) then
+                    statusText = "Applied: " .. modes[selected].name .. ", reboot for apply."
+                else
+                    statusText = "ERROR: Could not save screen.ini"
+                end
+                DrawDialog()
+
+            elseif char == 49 then selected = 1 statusText = modes[1].name DrawDialog()
+            elseif char == 50 then selected = 2 statusText = modes[2].name DrawDialog()
+            elseif char == 51 then selected = 3 statusText = modes[3].name DrawDialog()
+            end
+
+            coroutine.yield()
+
+        elseif event == "touch" then
+            local tx, ty = signal[3], signal[4]
+            local btnY = y + h - 2
+
+            if ty == y + 1 and tx >= x + w - 5 then
+                return
+            end
+
+            for i = 1, #modes do
+                local lineY = y + 5 + i
+                if ty == lineY and tx >= x + 2 and tx <= x + w - 3 then
+                    selected = i
+                    statusText = "Selected: " .. modes[i].name
+                    DrawDialog()
+                    break
+                end
+            end
+
+            if ty == btnY and tx >= x + w - 22 and tx < x + w - 13 then
+                local modeId = modes[selected].id
+                if SaveMode(modeId) then
+                    statusText = "Applied: " .. modes[selected].name .. ", reboot for apply."
+                else
+                    statusText = "ERROR: Could not save screen.ini"
+                end
+                DrawDialog()
+
+            elseif ty == btnY and tx >= x + w - 11 and tx < x + w - 2 then
+                return
+            end
+
+            coroutine.yield()
+        end
+
+        coroutine.yield()
+    end
 end
 
 return explorer
