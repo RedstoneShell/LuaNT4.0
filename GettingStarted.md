@@ -13,7 +13,14 @@ WARNING: LuaNT can Write/Read at extrenal **filesystem** devices, by using **ntd
 NO, bro... is a Systems Management Servers, or simple: App Market, here programs, drivers and other things, that here on GitHub agreed by me(RedstoneShell), you can see list of programs at LuaNT GitHub(SystemsManServer/packages.cfg)
 
 ### Why colors at my Tier 1/2 screens soo werid (i don't have Tier 3 screen/videocard)
-Yet, LuaNT 4.0 maked only for Tier 3 screens/gpu's, but after 4.0.1.3, you can use Start>Color Setup... and select need color map (Monochrome, 16 colors, 256 colors). After Reboot, color map changed. I don't see this function in other OS, and i think, i made it first in OpenComputer.
+Yet, LuaNT 4.0 maked only for Tier 3 screens/gpu's, but after 4.0.1.3, you can use Start>Color Setup... and select need color map (Monochrome, 16 colors, 256 colors). After Reboot, color map changed. I don't see this function in other OS, and i think, i made it first in OpenComputer. Idk why, but on Tier 1 screen don't work clicks...
+Heres menu:
+![ColorSetup](not_copyable/2026-08-31_00.19.05.png)
+
+And Tier 1/2/3 screens modes (1bit/4bit/8bit colors):
+![ColorSetup](not_copyable/2026-08-31_00.18.40.png)
+![ColorSetup](not_copyable/2026-08-31_00.20.21.png)
+![ColorSetup](not_copyable/2026-08-31_00.21.40.png)
 
 ## Server Administrators help
 
