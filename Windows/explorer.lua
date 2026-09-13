@@ -9,116 +9,192 @@ explorer.startMenuOpen = false
 explorer.startMenuItems = {}
 local kernel32, selDsk, currPath, openCoverMenu, skip, rasapi32, event, inetCard, ndiswan = LdrLoadDll("Windows/System32/kernel32.lua"), "", "/", false, true, LdrLoadDll("/Windows/System32/rasapi32.lua"), LdrLoadDll("/Windows/System32/etw.lua"), false, LdrLoadDll("/Windows/System32/drivers/ndiswan.lua")
 
+local LDM = _G.Tier2CM == true
+local screenW, screenH = _G.HAL.gpu.w, _G.HAL.gpu.h
+local WIN_MULT = LDM and 0.5 or 1.0
+
 function explorer.Desktop(gdi, gpu, s32, profile)
-    explorer.gdi32=gdi
-    explorer.gpu=gpu
-    explorer.s32=s32
-    explorer.screen={ width=gpu.w, height=gpu.h }
+    explorer.gdi32 = gdi
+    explorer.gpu = gpu
+    explorer.s32 = s32
+    explorer.screen = { width = gpu.w, height = gpu.h }
+
+    local LDM = _G.Tier2CM == true
+
     local hdc = gdi.GetDC(0)
+
+    -- Фон
     local hDeskB = gdi.CreateSolidBrush(0x008080)
     gdi.SelectObject(hdc, hDeskB)
     gdi.PatBlt(hdc, 0, 0, gpu.w, gpu.h, gdi.PATCOPY)
-    local hTaskB, tbh = gdi.CreateSolidBrush(0xCCCCCC), 6
+
+    local tbh = LDM and 3 or 6
+    local hTaskB = gdi.CreateSolidBrush(0xCCCCCC)
     gdi.SelectObject(hdc, hTaskB)
-    gdi.PatBlt(hdc, 0, gpu.h-tbh+1, gpu.w, tbh, gdi.PATCOPY)
+    gdi.PatBlt(hdc, 0, gpu.h - tbh + 1, gpu.w, tbh, gdi.PATCOPY)
+
     _G.StartMenuOpen = false
 
     local function DrawStartMenu(open)
         local hdc = gdi.GetDC(0)
-        local mX, mY, mW, mH = 2, (_G.HAL.h or gpu.h) - 19, 20, 14
-        
+
+        local mX, mY, mW, mH
+        local menuItems = {}
+        local iconW = 12
+
+        if LDM then
+            mX, mY, mW, mH = 2, (_G.HAL.h or gpu.h) - 12, 15, 10
+            menuItems = {
+                { "Task Manager", 1 },
+                { "Device Manager", 2 },
+                { "User Manager", 3 },
+                { "File Manager", 4 },
+                { "──────────", 5 },
+                { "Run...", 6 },
+                { "Shut Down...", 7 },
+                { "Color Setup...", 8 },
+            }
+        else
+            mX, mY, mW, mH = 2, (_G.HAL.h or gpu.h) - 19, 20, 14
+            menuItems = {
+                { "Task Manager", 1 },
+                { "Device Manager", 3 },
+                { "User Manager", 4 },
+                { "File Manager", 6 },
+                { "──────────────", 7 },
+                { "Run...", 8 },
+                { "Color Setup...", 12 },
+                { "Shut Down...", 10 },
+            }
+        end
+
         if open then
             gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xC0C0C0))
             gdi.PatBlt(hdc, mX, mY, mW, mH, gdi.PATCOPY)
-            
+
             gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
             gdi.PatBlt(hdc, mX, mY, 2, mH, gdi.PATCOPY)
-            
+
             gdi.SetTextColor(hdc, 0xFFFFFF)
             gdi.SetBkColor(hdc, 0xC0C0C0)
-            gdi.TextOut(hdc, mX + 3, mY + 1,  "Task Manager  ")
-            gdi.TextOut(hdc, mX + 3, mY + 3,  "Device Manager")
-            gdi.TextOut(hdc, mX + 3, mY + 4,  "User Manager  ")
-            gdi.TextOut(hdc, mX + 3, mY + 6,  "File Manager  ")
-            gdi.TextOut(hdc, mX + 3, mY + 7,  "──────────────")
-            gdi.TextOut(hdc, mX + 3, mY + 8,  "Run...        ")
-            gdi.TextOut(hdc, mX + 3, mY + 12, "Color Setup...")
-            gdi.TextOut(hdc, mX + 3, mY + 10, "Shut Down...  ")
-            
-            s32.RegisterIcon("Start_TaskMgr", mX + 3, mY + 1, 12, 1, function(a)
-                if a[1] == "OPEN" then
-                    _G.StartMenuOpen = false
-                    DrawStartMenu(false)
-                    _G.PsCreateSystemThread("Windows/System32/taskmgr.lua", "taskmgr.exe", 8, { name = "SYSTEM", group = "SYSTEM" })
-                end
-            end)
-            
-            s32.RegisterIcon("Start_DevMgr", mX + 3, mY + 3, 14, 1, function(a)
-                if a[1] == "OPEN" then
-                    _G.StartMenuOpen = false
-                    DrawStartMenu(false)
-                    _G.PsCreateSystemThread("Windows/System32/devmgr.lua", "devmgr.exe", 8, { name = "Administrator", group = "ADMINS" })
-                end
-            end)
-            
-            s32.RegisterIcon("Start_UserMgr", mX + 3, mY + 4, 12, 1, function(a)
-                if a[1] == "OPEN" then
-                    _G.StartMenuOpen = false
-                    DrawStartMenu(false)
-                    _G.PsCreateSystemThread("Windows/System32/usrmgr.lua", "usrmgr.exe", 8, { name = "Administrator", group = "ADMINS" })
-                end
-            end)
 
-            s32.RegisterIcon("Start_MyComputer", mX + 3, mY + 6, 12, 1, function(a)
-                if a[1] == "OPEN" then
-                    _G.StartMenuOpen = false
-                    DrawStartMenu(false)
-                    _G.PsCreateSystemThread("Windows/explorer_n.lua", "explorer.exe", 8, { name = "Administrator", group = "ADMINS" })
-                end
-            end)
-            
-            s32.RegisterIcon("Start_Run", mX + 3, mY + 8, 12, 1, function(a)
-                if a[1] == "OPEN" then
-                    _G.StartMenuOpen = false
-                    DrawStartMenu(false)
-                    explorer.RunDialog(gdi, gpu, s32)
-                end
-            end)
+            for _, item in ipairs(menuItems) do
+                gdi.TextOut(hdc, mX + 3, mY + item[2], item[1]:sub(1, mW - 4))
+            end
 
-            s32.RegisterIcon("Start_Color", mX + 3, mY + 12, 13, 1, function(a)
-                if a[1] == "OPEN" then
-                    _G.StartMenuOpen = false
-                    DrawStartMenu(false)
-                    explorer.ColorSetup(gdi, gpu, s32)
-                end
-            end)
-        
-            s32.RegisterIcon("Start_Shutdown", mX + 3, mY + 10, 12, 1, function(a)
-                if a[1] == "OPEN" then
-                    _G.StartMenuOpen = false
-                    DrawStartMenu(false)
-                    
-                    local dialogW, dialogH = 40, 7
-                    local dialogX = math.floor(((_G.HAL.w or gpu.w) - dialogW) / 2)
-                    local dialogY = math.floor(((_G.HAL.h or gpu.h) - dialogH) / 2)
-                    
-                    gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xC0C0C0))
-                    gdi.PatBlt(hdc, dialogX, dialogY, dialogW, dialogH, gdi.PATCOPY)
-                    gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
-                    gdi.PatBlt(hdc, dialogX, dialogY, dialogW, 1, gdi.PATCOPY)
-                    
-                    gdi.SetTextColor(hdc, 0xFFFFFF)
-                    gdi.SetBkColor(hdc, 0x000080)
-                    gdi.TextOut(hdc, dialogX + 2, dialogY, "Shutting Down...")
-                    
-                    gdi.SetTextColor(hdc, 0x000000)
-                    gdi.SetBkColor(hdc, 0xC0C0C0)
-                    gdi.TextOut(hdc, dialogX + 4, dialogY + 2, "Windows NT is shutting down.")
-                    gdi.TextOut(hdc, dialogX + 4, dialogY + 4, "Please wait...")
-                    
-                    if _G.PerformSystemShutdown then _G.PerformSystemShutdown() else _G.HAL.halt() end
-                end
-            end)
+            if LDM then
+                s32.RegisterIcon("Start_TaskMgr", mX + 3, mY + 1, 12, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        _G.PsCreateSystemThread("Windows/System32/taskmgr.lua", "taskmgr.exe", 8, { name = "SYSTEM", group = "SYSTEM" })
+                    end
+                end)
+
+                s32.RegisterIcon("Start_DevMgr", mX + 3, mY + 2, 14, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        _G.PsCreateSystemThread("Windows/System32/devmgr.lua", "devmgr.exe", 8, { name = "Administrator", group = "ADMINS" })
+                    end
+                end)
+
+                s32.RegisterIcon("Start_UserMgr", mX + 3, mY + 3, 12, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        _G.PsCreateSystemThread("Windows/System32/usrmgr.lua", "usrmgr.exe", 8, { name = "Administrator", group = "ADMINS" })
+                    end
+                end)
+
+                s32.RegisterIcon("Start_MyComputer", mX + 3, mY + 4, 12, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        _G.PsCreateSystemThread("Windows/explorer_n.lua", "explorer.exe", 8, { name = "Administrator", group = "ADMINS" })
+                    end
+                end)
+
+                s32.RegisterIcon("Start_Run", mX + 3, mY + 6, 12, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        explorer.RunDialog(gdi, gpu, s32)
+                    end
+                end)
+
+                s32.RegisterIcon("Start_Shutdown", mX + 3, mY + 7, 12, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        if _G.PerformSystemShutdown then _G.PerformSystemShutdown() else _G.HAL.halt() end
+                    end
+                end)
+
+                s32.RegisterIcon("Start_Color", mX + 3, mY + 8, 13, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        explorer.ColorSetup(gdi, gpu, s32)
+                    end
+                end)
+            else
+                s32.RegisterIcon("Start_TaskMgr", mX + 3, mY + 1, 12, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        _G.PsCreateSystemThread("Windows/System32/taskmgr.lua", "taskmgr.exe", 8, { name = "SYSTEM", group = "SYSTEM" })
+                    end
+                end)
+
+                s32.RegisterIcon("Start_DevMgr", mX + 3, mY + 3, 14, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        _G.PsCreateSystemThread("Windows/System32/devmgr.lua", "devmgr.exe", 8, { name = "Administrator", group = "ADMINS" })
+                    end
+                end)
+
+                s32.RegisterIcon("Start_UserMgr", mX + 3, mY + 4, 12, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        _G.PsCreateSystemThread("Windows/System32/usrmgr.lua", "usrmgr.exe", 8, { name = "Administrator", group = "ADMINS" })
+                    end
+                end)
+
+                s32.RegisterIcon("Start_MyComputer", mX + 3, mY + 6, 12, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        _G.PsCreateSystemThread("Windows/explorer_n.lua", "explorer.exe", 8, { name = "Administrator", group = "ADMINS" })
+                    end
+                end)
+
+                s32.RegisterIcon("Start_Run", mX + 3, mY + 8, 12, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        explorer.RunDialog(gdi, gpu, s32)
+                    end
+                end)
+
+                s32.RegisterIcon("Start_Shutdown", mX + 3, mY + 10, 12, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        if _G.PerformSystemShutdown then _G.PerformSystemShutdown() else _G.HAL.halt() end
+                    end
+                end)
+
+                s32.RegisterIcon("Start_Color", mX + 3, mY + 12, 13, 1, function(a)
+                    if a[1] == "OPEN" then
+                        _G.StartMenuOpen = false
+                        DrawStartMenu(false)
+                        explorer.ColorSetup(gdi, gpu, s32)
+                    end
+                end)
+            end
         else
             gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x008080))
             gdi.PatBlt(hdc, mX, mY, mW, mH, gdi.PATCOPY)
@@ -128,26 +204,51 @@ function explorer.Desktop(gdi, gpu, s32, profile)
             s32.UnregIcon("Start_Run", mX + 3, mY + 8)
             s32.UnregIcon("Start_Color", mX + 3, mY + 12)
             s32.UnregIcon("Start_Shutdown", mX + 3, mY + 10)
+
             if s32.DrawDesktopIcons then s32.DrawDesktopIcons() end
         end
     end
-    s32.DrawIcon(hdc, gdi, 0x0000AA, 2, gpu.h-3, "StartButton", "Computer")
-    s32.RegisterIcon("StartButton", 2, gpu.h - 3, 9, 1, function(args)
+    local startW, startH
+    if LDM then
+        startW, startH = 6, 1
+    else
+        startW, startH = 9, 1
+    end
+
+    s32.DrawIcon(hdc, gdi, 0x0000AA, 2, gpu.h - 3, "StartButton", "Computer")
+    s32.RegisterIcon("StartButton", 2, gpu.h - 3, startW, startH, function(args)
         if args[1] == "OPEN" or args[1] == "MENU" then
             _G.StartMenuOpen = not _G.StartMenuOpen
             DbgPrint("EXPLORER: Toggle Start Menu. State: " .. tostring(_G.StartMenuOpen))
             DrawStartMenu(_G.StartMenuOpen)
         end
     end)
+
     KeDelayExecutionThread(1)
-    s32.DrawIcon(hdc, gdi, 0xFFFFFF, 2, 2, "MyPC", "My PC")
-    s32.DrawIcon(hdc, gdi, 0x555555, gpu.w-19, gpu.h-4, "NoNetwork", "")
-    s32.DrawIcon(hdc, gdi, 0x0000A0, 2, 8, "SetupMgr", "Setup Mgr")
-    s32.DrawIcon(hdc, gdi, 0x0000A0, 2, 14, "Notepad", "Notepad")
-    s32.DrawIcon(hdc, gdi, 0x0000A0, 10, 2, "AppCenter", "SMS")
-    s32.DrawIcon(hdc, gdi, 0xAA0000, gpu.w-10, 2, "Minesweeper", "Minesweeper")
-    s32.DrawIcon(hdc, gdi, 0x000055, gpu.w-10, 8, "IE", "Internet Explorer")
-    s32.RegisterIcon("MyPC", 2, 2, 5, 4, function(args)
+
+    if LDM then
+        s32.DrawIcon(hdc, gdi, 0xFFFFFF, 2, 2, "MyPC", "My PC")
+        s32.DrawIcon(hdc, gdi, 0x555555, gpu.w - 10, gpu.h - 3, "NoNetwork", "")
+        s32.DrawIcon(hdc, gdi, 0x0000A0, 2, 6, "SetupMgr", "Setup")
+        s32.DrawIcon(hdc, gdi, 0x0000A0, 2, 10, "Notepad", "Notepad")
+        s32.DrawIcon(hdc, gdi, 0x0000A0, 8, 2, "AppCenter", "SMS")
+        s32.DrawIcon(hdc, gdi, 0x000055, gpu.w - 6, 6, "IE", "IE")
+    else
+        s32.DrawIcon(hdc, gdi, 0xFFFFFF, 2, 2, "MyPC", "My PC")
+        s32.DrawIcon(hdc, gdi, 0x555555, gpu.w - 19, gpu.h - 4, "NoNetwork", "")
+        s32.DrawIcon(hdc, gdi, 0x0000A0, 2, 8, "SetupMgr", "Setup Mgr")
+        s32.DrawIcon(hdc, gdi, 0x0000A0, 2, 14, "Notepad", "Notepad")
+        s32.DrawIcon(hdc, gdi, 0x0000A0, 10, 2, "AppCenter", "SMS")
+        s32.DrawIcon(hdc, gdi, 0xAA0000, gpu.w - 10, 2, "Minesweeper", "Minesweeper")
+        s32.DrawIcon(hdc, gdi, 0x000055, gpu.w - 10, 8, "IE", "Internet Explorer")
+    end
+    local myPcW, myPcH
+    if LDM then
+        myPcW, myPcH = 5, 2
+    else
+        myPcW, myPcH = 5, 4
+    end
+    s32.RegisterIcon("MyPC", 2, 2, myPcW, myPcH, function(args)
         if args[1] == "OPEN" then
             explorer.OpenMyPc(gdi, gpu, s32)
         elseif args[1] == "MENU" then
@@ -177,55 +278,66 @@ function explorer.Desktop(gdi, gpu, s32, profile)
             openCoverMenu = true
         end
     end)
-    s32.RegisterIcon("NoNetwork", gpu.w-19, gpu.h-4, 6, 4, function(args)
-        if args[1]=="OPEN" then explorer.INET_PLS(gdi, gpu, s32) end
+    local netW, netH
+    if LDM then
+        netW, netH = 5, 2
+    else
+        netW, netH = 6, 4
+    end
+    s32.RegisterIcon("NoNetwork", gpu.w - 10, gpu.h - 3, netW, netH, function(args)
+        if args[1] == "OPEN" then explorer.INET_PLS(gdi, gpu, s32) end
     end)
-    s32.RegisterIcon("SetupMgr", 2, 8, 6, 4, function(args)
+    local setupW, setupH
+    if LDM then
+        setupW, setupH = 5, 2
+    else
+        setupW, setupH = 6, 4
+    end
+    s32.RegisterIcon("SetupMgr", 2, 6, setupW, setupH, function(args)
         if args[1] == "OPEN" then explorer.OpenSetupMgr(gdi, gpu, s32) end
     end)
-    s32.RegisterIcon("AppCenter", 10, 2, 6, 4, function(args)
-        if args[1] == "OPEN" then _G.PsCreateSystemThread("Windows/System32/sms.lua", "sms.exe", 8, { name="USER", group="USER" }) end
-    end)
-    s32.RegisterIcon("Notepad", 2, 14, 5, 4, function(args)
-        if args[1]=="OPEN" then _G.PsCreateSystemThread("Windows/notepad.lua", "notepad.exe", 8, { name="USER", group="USER" }) end
-    end)
-    s32.RegisterIcon("Minesweeper", gpu.w-10, 2, 5, 4, function(args)
-        if args[1]=="OPEN" then _G.PsCreateSystemThread("Windows/System32/winmine.lua", "winmine.exe", 8, { name="USER", group="USER" }) end
-    end)
-    s32.RegisterIcon("IE", gpu.w-10, 8, 5, 4, function(args)
-        if args[1]=="OPEN" then _G.PsCreateSystemThread("Windows/System32/IEXPLORE.lua", "IEXPLORE.EXE", 8, { name="USER", group="USER" }) end
-    end)
-end
-
-function explorer.ShellExecute(commandLine)
-    if not commandLine or commandLine == "" then return false end
-    
-    DbgPrint("SHELL32: ShellExecute attempting to start: " .. commandLine)
-    
-    local appPathKey = "\\Software\\RedstoneShell\\Windows\\CurrentVersion\\App_Paths\\" .. commandLine
-    local customPath = _G.regedit0.GetValue(appPathKey, "Path")
-    if customPath and component.proxy(computer.getBootAddress()).exists(customPath) then
-        DbgPrint("SHELL32: Program found via App Paths registry: " .. customPath)
-        return _G.PsCreateSystemThread(customPath, commandLine, 8)
+    local appW, appH
+    if LDM then
+        appW, appH = 5, 2
+    else
+        appW, appH = 6, 4
     end
-    
-    local system32Path = "Windows/System32/" .. commandLine
-    if not system32Path:match("%.lua$") then
-        system32Path = system32Path .. ".lua"
+    s32.RegisterIcon("AppCenter", 8, 2, appW, appH, function(args)
+        if args[1] == "OPEN" then _G.PsCreateSystemThread("Windows/System32/sms.lua", "sms.exe", 8, { name = "USER", group = "USER" }) end
+    end)
+    local noteW, noteH
+    if LDM then
+        noteW, noteH = 5, 2
+    else
+        noteW, noteH = 5, 4
     end
-    
-    if component.proxy(computer.getBootAddress()).exists(system32Path) then
-        DbgPrint("SHELL32: Program found in System32: " .. system32Path)
-        return _G.PsCreateSystemThread(system32Path, commandLine, 8)
+    s32.RegisterIcon("Notepad", 2, 10, noteW, noteH, function(args)
+        if args[1] == "OPEN" then _G.PsCreateSystemThread("Windows/notepad.lua", "notepad.exe", 8, { name = "USER", group = "USER" }) end
+    end)
+    if not LDM then
+        s32.RegisterIcon("Minesweeper", gpu.w - 10, 2, 5, 4, function(args)
+            if args[1] == "OPEN" then _G.PsCreateSystemThread("Windows/System32/winmine.lua", "winmine.exe", 8, { name = "USER", group = "USER" }) end
+        end)
     end
-    
-    DbgPrint("SHELL32: CreateProcess failed. File " .. commandLine .. " not found.")
-    return nil, "STATUS_OBJECT_NAME_NOT_FOUND"
+    local ieW, ieH
+    if LDM then
+        ieW, ieH = 3, 2
+    else
+        ieW, ieH = 5, 4
+    end
+    s32.RegisterIcon("IE", gpu.w - 6, 6, ieW, ieH, function(args)
+        if args[1] == "OPEN" then _G.PsCreateSystemThread("Windows/System32/IEXPLORE.lua", "IEXPLORE.EXE", 8, { name = "USER", group = "USER" }) end
+    end)
 end
 
 function explorer.OpenSetupMgr(gdi, gpu, s32)
     local hdc = gdi.GetDC(0)
-    local w, h = 50, 15
+    local w, h
+    if LDM then
+        w, h = 46, 12
+    else
+        w, h = 50, 15
+    end
     local x = math.floor((explorer.screen.width - w) / 2)
     local y = math.floor((explorer.screen.height - h) / 2)
     
@@ -525,7 +637,7 @@ function explorer.HandleClick(x, y)
                 elseif item.btn=="Format..." then
                     explorer.FormatAcc()
                     openCoverMenu=true
-                elseif item.btn=="Properties" then
+                elseif item.btn=="Properties0" then
                     explorer.Props()
                     openCoverMenu=true
                 elseif item.btn=="Open" then
@@ -884,63 +996,99 @@ function explorer.RegisterMenu(x, y, buttons)
 end
 
 function explorer.OpenMyPc(gdi, gpu, s32)
-    local hdc, hddc, yOff, diskOffs, regDsks = gdi.GetDC(0), 0, 19, {}, {}
-    local hWinB = gdi.CreateSolidBrush(0xFAFAFA)
-    gdi.SelectObject(hdc, hWinB)
-    gdi.PatBlt(hdc, 20, 10, 80, 20, gdi.PATCOPY)
-
-    local hTitleB = gdi.CreateSolidBrush(0x000080)
-    gdi.SelectObject(hdc, hTitleB)
-    gdi.PatBlt(hdc, 20, 10, 80, 1, gdi.PATCOPY)
+    if s32.DeskIcon then
+        s32.DeskIcon["Drive"] = nil
+        s32.DeskIcon["CloseMyPC"] = nil
+    end
+    local hdc = gdi.GetDC(0)
+    local hddc, yOff, diskOffs, regDsks = 0, 19, {}, {}
+    local LDM = _G.Tier2CM == true
+    local winX, winY, winW, winH
+    local titleY, closeX
+    local iconX, iconTextX
+    local yStart, yStep
     
+    if LDM then
+        winX, winY, winW, winH = 3, 3, 74, 19
+        titleY = winY
+        closeX = winX + winW - 3
+        iconX = winX + 3
+        iconTextX = winX + 12
+        yStart = winY + 4
+        yStep = 3
+    else
+        winX, winY, winW, winH = 20, 10, 80, 20
+        titleY = winY
+        closeX = winX + winW - 3
+        iconX = winX + 5
+        iconTextX = winX + 16
+        yStart = winY + 9
+        yStep = 5
+    end
+    
+    yOff = yStart
+    
+    gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xFAFAFA))
+    gdi.PatBlt(hdc, winX, winY, winW, winH, gdi.PATCOPY)
+    gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
+    gdi.PatBlt(hdc, winX, titleY, winW, 1, gdi.PATCOPY)
     gdi.SetTextColor(hdc, 0xFFFFFF)
-    gdi.TextOut(hdc, 22, 10, "My Computer")
-    gdi.TextOut(hdc, 97, 10, "[X]")
-    
-    s32.RegisterIcon("CloseMyPC", 97, 10, 3, 1, function(args)
+    gdi.SetBkColor(hdc, 0x000080)
+    gdi.TextOut(hdc, winX + 2, titleY, "My Computer")
+    gdi.SetTextColor(hdc, 0xFF0000)
+    gdi.TextOut(hdc, closeX, titleY, "[X]")
+    s32.RegisterIcon("CloseMyPC", closeX, titleY, 3, 1, function(args)
         if args[1] == "OPEN" then
             computer.beep(440, 0.05)
+            s32.DeskIcon["Drive"] = nil
+            s32.DeskIcon["CloseMyPC"] = nil
             explorer.Desktop(gdi, gpu, s32)
         end
     end)
-
     for l, devName in pairs(_G.Drives) do
-        if l and type(l)=="string" and #l>=2 then
-            if l:sub(2,2)==":" then
+        if l and type(l) == "string" and #l >= 2 then
+            if l:sub(2, 2) == ":" then
                 local dev = _G.Mm.NonPagedPool[devName]
-                if dev and dev.getLabel~=nil then
+                if dev and dev.getLabel ~= nil then
                     local fd = dev.getLabel()
                     if l == "A:" or l == "B:" then
-                        local fullLabel
                         table.insert(diskOffs, yOff)
-                        if fd then fullLabel = fd .. " (" .. l .. ")" else fullLabel="Floppy" .. " (" .. l .. ")" end
+                        local fullLabel
+                        if fd then
+                            fullLabel = fd .. " (" .. l .. ")"
+                        else
+                            fullLabel = "Floppy" .. " (" .. l .. ")"
+                        end
                         table.insert(regDsks, l)
-                        s32.DrawIcon(hdc, gdi, 0xAABBCC, 25, yOff, "Floppy", l)
+                        s32.DrawIcon(hdc, gdi, 0xAABBCC, iconX, yOff, "Floppy", l)
                         gdi.SetTextColor(hdc, 0x000000)
-                        gdi.TextOut(hdc, 36, yOff+1, fullLabel)
-                        yOff=yOff+5
-                        hddc=hddc+1
+                        gdi.SetBkColor(hdc, 0xFAFAFA)
+                        gdi.TextOut(hdc, iconTextX, yOff + 1, fullLabel)
+                        yOff = yOff + yStep
+                        hddc = hddc + 1
                     end
                     if fd then
-                        table.insert(diskOffs, yOff)
                         if l == "A:" or l == "B:" then goto continue end
+                        table.insert(diskOffs, yOff)
                         table.insert(regDsks, l)
                         local fullLabel = fd .. " (" .. l .. ")"
-                        s32.DrawIcon(hdc, gdi, 0xAABBCC, 25, yOff, "Drive", l)
+                        s32.DrawIcon(hdc, gdi, 0xAABBCC, iconX, yOff, "Drive", l)
                         gdi.SetTextColor(hdc, 0x000000)
-                        gdi.TextOut(hdc, 36, yOff+1, fullLabel)
-                        yOff=yOff+5
-                        hddc=hddc+1
+                        gdi.SetBkColor(hdc, 0xFAFAFA)
+                        gdi.TextOut(hdc, iconTextX, yOff + 1, fullLabel)
+                        yOff = yOff + yStep
+                        hddc = hddc + 1
                     else
-                        table.insert(diskOffs, yOff)
                         if l == "A:" or l == "B:" then goto continue end
-                        local fullLabel = "Local Disk" .. " (" .. l .. ")"
+                        table.insert(diskOffs, yOff)
                         table.insert(regDsks, l)
-                        s32.DrawIcon(hdc, gdi, 0xAABBCC, 25, yOff, "Drive_Error", l)
+                        local fullLabel = "Local Disk" .. " (" .. l .. ")"
+                        s32.DrawIcon(hdc, gdi, 0xAABBCC, iconX, yOff, "Drive_Error", l)
                         gdi.SetTextColor(hdc, 0xFF0000)
-                        gdi.TextOut(hdc, 36, yOff+1, fullLabel)
-                        yOff=yOff+5
-                        hddc=hddc+1
+                        gdi.SetBkColor(hdc, 0xFAFAFA)
+                        gdi.TextOut(hdc, iconTextX, yOff + 1, fullLabel)
+                        yOff = yOff + yStep
+                        hddc = hddc + 1
                     end
                 end
             end
@@ -948,25 +1096,39 @@ function explorer.OpenMyPc(gdi, gpu, s32)
         ::continue::
     end
     gdi.SetTextColor(hdc, 0x113399)
-    gdi.TextOut(hdc, 25, 15, "Hard disk drives ("..hddc..")")
-    s32.RegisterIcon("Drive", 25, diskOffs, 8, 4, function (args)
-        if args[1]=="MENU" and not openCoverMenu then
-            selDsk=regDsks[args[2]]
-            local hdc, clickX, clickY=explorer.gdi32.GetDC(0), args.click[1]+1, args.click[2]
+    gdi.SetBkColor(hdc, 0xFAFAFA)
+    if LDM then
+        gdi.TextOut(hdc, winX + 2, winY + 2, "Hard disk drives (" .. hddc .. ")")
+    else
+        gdi.TextOut(hdc, winX + 5, winY + 5, "Hard disk drives (" .. hddc .. ")")
+    end
+    s32.RegisterIcon("Drive", iconX, diskOffs, 8, 4, function(args)
+        if args[1] == "MENU" and not openCoverMenu then
+            selDsk = regDsks[args[2]]
+            local hdc = explorer.gdi32.GetDC(0)
+            local clickX = args.click[1] + 1
+            local clickY = args.click[2]
             explorer.gdi32.SelectObject(hdc, explorer.gdi32.CreateSolidBrush(0xCCCCCC))
-            explorer.gdi32.PatBlt(hdc, clickX, clickY, 12, 3, explorer.gdi32.PATCOPY)
+            explorer.gdi32.PatBlt(hdc, clickX, clickY, 14, 4, explorer.gdi32.PATCOPY)
             explorer.gdi32.SetTextColor(hdc, 0x000000)
-            explorer.gdi32.TextOut(hdc, clickX+1, clickY,   "Open")
-            explorer.gdi32.TextOut(hdc, clickX+1, clickY+2, "Format...")
-            explorer.gdi32.TextOut(hdc, clickX+1, clickY+3, "Properties")
-            explorer.RegisterMenu(clickX, clickY, {"Open", "Explore", "Format...", "Properties"})
+            explorer.gdi32.SetBkColor(hdc, 0xCCCCCC)
+            explorer.gdi32.TextOut(hdc, clickX + 1, clickY, "Open")
+            explorer.gdi32.TextOut(hdc, clickX + 1, clickY + 1, "Explore")
+            explorer.gdi32.TextOut(hdc, clickX + 1, clickY + 2, "Format...")
+            explorer.gdi32.TextOut(hdc, clickX + 1, clickY + 3, "Properties")
+            explorer.RegisterMenu(clickX, clickY, { "Open", "Explore", "Format...", "Properties0" })
         end
     end)
 end
 
 function explorer.RunDialog(gdi, gpu, s32)
     local hdc = gdi.GetDC(0)
-    local w, h = 40, 7
+    local w, h
+    if LDM then
+        w, h = 36, 6
+    else
+        w, h = 40, 7
+    end
     local x = math.floor((explorer.screen.width - w) / 2)
     local y = math.floor((explorer.screen.height - h) / 2)
 
@@ -1075,7 +1237,12 @@ end
 -- ===== Color Setup Dialog =====
 function explorer.ColorSetup(gdi, gpu, s32)
     local hdc = gdi.GetDC(0)
-    local w, h = 44, 12
+    local w, h
+    if LDM then
+        w, h = 40, 10
+    else
+        w, h = 44, 12
+    end
     local x = math.floor((explorer.screen.width - w) / 2)
     local y = math.floor((explorer.screen.height - h) / 2)
 
@@ -1255,7 +1422,12 @@ function explorer.ShowSystemProperties(gdi, gpu, s32)
     local hdc = gdi.GetDC(0)
     local screenW, screenH = _G.HAL.w, _G.HAL.h
 
-    local winW, winH = 56, 18
+    local winW, winH
+    if LDM then
+        winW, winH = 50, 14
+    else
+        winW, winH = 56, 18
+    end
     local winX = math.floor((screenW - winW) / 2)
     local winY = math.floor((screenH - winH) / 2)
 

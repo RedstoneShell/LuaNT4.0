@@ -73,8 +73,15 @@ end
 
 local hdc = gdi32.GetDC(0)
 local screenW, screenH = _G.HAL.w, _G.HAL.h
-
-local winW, winH = 70, 30
+local LDM = _G.Tier2CM == true
+local screenW, screenH = _G.HAL.w, _G.HAL.h
+local hdc = gdi32.GetDC(0)
+local winW, winH
+if LDM then
+    winW, winH = 60, 20
+else
+    winW, winH = 70, 30
+end
 local winX = math.floor((screenW - winW) / 2)
 local winY = math.floor((screenH - winH) / 2)
 local clientX = winX + 1
@@ -173,8 +180,12 @@ local function ReadString(prompt, maxLen, default)
     local tempH = winH
     
     local function DrawInputDialog()
-        local dialogW = 50
-        local dialogH = 6
+        local dialogW, dialogH
+        if LDM then
+            dialogW, dialogH = 44, 5
+        else
+            dialogW, dialogH = 50, 6
+        end
         local dialogX = math.floor((screenW - dialogW) / 2)
         local dialogY = math.floor((screenH - dialogH) / 2)
         
@@ -192,7 +203,7 @@ local function ReadString(prompt, maxLen, default)
         gdi32.TextOut(hdc, dialogX + 2, dialogY + 2, prompt)
         
         gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(0xFFFFFF))
-        gdi32.PatBlt(hdc, dialogX + 2, dialogY + 3, 46, 1, gdi32.PATCOPY)
+        gdi32.PatBlt(hdc, dialogX + 2, dialogY + 3, dialogW - 4, 1, gdi32.PATCOPY)
         gdi32.SetTextColor(hdc, 0x000000)
         gdi32.SetBkColor(hdc, 0xFFFFFF)
         gdi32.TextOut(hdc, dialogX + 3, dialogY + 3, input .. "|")
@@ -708,13 +719,17 @@ function DrawStatusBar()
     gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(COLORS.status_bg))
     gdi32.PatBlt(hdc, winX + 1, statusY - 1, winW - 2, 1, gdi32.PATCOPY)
     
-    local statusText = string.format("Ln %d, Col %d  %s  %s  %s",
-        cursorLine,
-        cursorPos,
-        isInsertMode and "INS" or "OVR",
-        wordWrap and "WRAP" or "",
-        fileName
-    )
+    local statusText
+    if LDM then
+        statusText = string.format("Ln %d, Col %d %s", cursorLine, cursorPos, isInsertMode and "INS" or "OVR")
+    else
+        statusText = string.format("Ln %d, Col %d  %s  %s  %s",
+            cursorLine, cursorPos,
+            isInsertMode and "INS" or "OVR",
+            wordWrap and "WRAP" or "",
+            fileName)
+    end
+    
     gdi32.SetTextColor(hdc, COLORS.status_text)
     gdi32.SetBkColor(hdc, COLORS.status_bg)
     gdi32.TextOut(hdc, winX + 2, statusY - 1, statusText)
