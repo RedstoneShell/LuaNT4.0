@@ -25,7 +25,7 @@ function explorer.Desktop(gdi, gpu, s32, profile)
 
     local function DrawStartMenu(open)
         local hdc = gdi.GetDC(0)
-        local mX, mY, mW, mH = 2, (_G.HAL.h or gpu.h) - 19, 20, 14  -- трохи вище, бо додався пункт
+        local mX, mY, mW, mH = 2, (_G.HAL.h or gpu.h) - 19, 20, 14
         
         if open then
             gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xC0C0C0))
@@ -36,25 +36,16 @@ function explorer.Desktop(gdi, gpu, s32, profile)
             
             gdi.SetTextColor(hdc, 0xFFFFFF)
             gdi.SetBkColor(hdc, 0xC0C0C0)
-            gdi.TextOut(hdc, mX + 3, mY + 1,  "Command Prompt")
-            gdi.TextOut(hdc, mX + 3, mY + 2,  "Task Manager  ")
+            gdi.TextOut(hdc, mX + 3, mY + 1,  "Task Manager  ")
             gdi.TextOut(hdc, mX + 3, mY + 3,  "Device Manager")
             gdi.TextOut(hdc, mX + 3, mY + 4,  "User Manager  ")
             gdi.TextOut(hdc, mX + 3, mY + 6,  "File Manager  ")
             gdi.TextOut(hdc, mX + 3, mY + 7,  "──────────────")
             gdi.TextOut(hdc, mX + 3, mY + 8,  "Run...        ")
-            gdi.TextOut(hdc, mX + 3, mY + 9,  "Color Setup...")
+            gdi.TextOut(hdc, mX + 3, mY + 12, "Color Setup...")
             gdi.TextOut(hdc, mX + 3, mY + 10, "Shut Down...  ")
-
-            s32.RegisterIcon("Start_CMD", mX + 3, mY + 1, 14, 1, function(a)
-                if a[1] == "OPEN" then
-                    _G.StartMenuOpen = false
-                    DrawStartMenu(false)
-                    _G.PsCreateSystemThread("Windows/System32/cmd.lua", "cmd.exe", 8, { name = "Administrator", group = "ADMINS" })
-                end
-            end)
             
-            s32.RegisterIcon("Start_TaskMgr", mX + 3, mY + 2, 12, 1, function(a)
+            s32.RegisterIcon("Start_TaskMgr", mX + 3, mY + 1, 12, 1, function(a)
                 if a[1] == "OPEN" then
                     _G.StartMenuOpen = false
                     DrawStartMenu(false)
@@ -94,7 +85,7 @@ function explorer.Desktop(gdi, gpu, s32, profile)
                 end
             end)
 
-            s32.RegisterIcon("Start_Color", mX + 3, mY + 9, 13, 1, function(a)
+            s32.RegisterIcon("Start_Color", mX + 3, mY + 12, 13, 1, function(a)
                 if a[1] == "OPEN" then
                     _G.StartMenuOpen = false
                     DrawStartMenu(false)
@@ -131,12 +122,11 @@ function explorer.Desktop(gdi, gpu, s32, profile)
         else
             gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x008080))
             gdi.PatBlt(hdc, mX, mY, mW, mH, gdi.PATCOPY)
-            s32.UnregIcon("Start_CMD", mX + 3, mY + 1)
-            s32.UnregIcon("Start_TaskMgr", mX + 3, mY + 2)
+            s32.UnregIcon("Start_TaskMgr", mX + 3, mY + 1)
             s32.UnregIcon("Start_DevMgr", mX + 3, mY + 3)
             s32.UnregIcon("Start_UserMgr", mX + 3, mY + 4)
             s32.UnregIcon("Start_Run", mX + 3, mY + 8)
-            s32.UnregIcon("Start_Color", mX + 3, mY + 9)
+            s32.UnregIcon("Start_Color", mX + 3, mY + 12)
             s32.UnregIcon("Start_Shutdown", mX + 3, mY + 10)
             if s32.DrawDesktopIcons then s32.DrawDesktopIcons() end
         end
@@ -158,27 +148,32 @@ function explorer.Desktop(gdi, gpu, s32, profile)
     s32.DrawIcon(hdc, gdi, 0xAA0000, gpu.w-10, 2, "Minesweeper", "Minesweeper")
     s32.DrawIcon(hdc, gdi, 0x000055, gpu.w-10, 8, "IE", "Internet Explorer")
     s32.RegisterIcon("MyPC", 2, 2, 5, 4, function(args)
-        if args[1]=="OPEN" then explorer.OpenMyPc(gdi, gpu, s32)
+        if args[1] == "OPEN" then
+            explorer.OpenMyPc(gdi, gpu, s32)
         elseif args[1] == "MENU" then
             local clickX, clickY = args.click[1] + 1, args.click[2]
             local hdc = explorer.gdi32.GetDC(0)
-            
+
             explorer.gdi32.SelectObject(hdc, explorer.gdi32.CreateSolidBrush(0xCCCCCC))
             explorer.gdi32.PatBlt(hdc, clickX, clickY, 14, 2, explorer.gdi32.PATCOPY)
-            
+
             local isInstallAllowed = component.proxy(computer.getBootAddress()).spaceTotal() == 524288
-            
+
             if isInstallAllowed then
                 explorer.gdi32.SetTextColor(hdc, 0x000000)
             else
                 explorer.gdi32.SetTextColor(hdc, 0x777777)
             end
-            explorer.gdi32.TextOut(hdc, clickX + 1, clickY + 1, "Install To...")
-            
+            explorer.gdi32.TextOut(hdc, clickX + 1, clickY, "Install To...")
+
+            explorer.gdi32.SetTextColor(hdc, 0x000000)
+            explorer.gdi32.TextOut(hdc, clickX + 1, clickY + 1, "Properties")
+
             explorer.RegisterMenu(clickX, clickY, {
-                "Install To..." .. (isInstallAllowed and "" or "_DISABLED")
+                "Install To..." .. (isInstallAllowed and "" or "_DISABLED"),
+                "Properties"
             })
-            
+
             openCoverMenu = true
         end
     end)
@@ -523,6 +518,10 @@ function explorer.HandleClick(x, y)
                     explorer.OpenWinNTSetup(explorer.gdi32, explorer.gpu, explorer.s32)
                     openCoverMenu = false
                     explorer.openedMenu = {}
+                elseif item.btn == "Properties" then
+                    explorer.ShowSystemProperties(explorer.gdi32, explorer.gpu, explorer.s32)
+                    openCoverMenu = false
+                    explorer.openedMenu = {}
                 elseif item.btn=="Format..." then
                     explorer.FormatAcc()
                     openCoverMenu=true
@@ -671,34 +670,6 @@ function explorer.FileWindow()
 end
 
 function explorer.FileEditor(path)
-    --local fsAddr=_G.Mm.NonPagedPool[_G.Drives[selDsk]].address
-    --local fs,hdc= component.proxy(fsAddr), explorer.gdi32.GetDC(0)
-    --if exit_fm0 then exit_fm0=false explorer.gdi32.SelectObject(hdc, explorer.gdi32.CreateSolidBrush(0x008080)) explorer.gdi32.PatBlt(hdc, 10, 30, 60, 22, explorer.gdi32.PATCOPY) return end
-
-    --local handle = fs.open(path, "r")
-    --local ctx = ""
-    --repeat
-    --    local chunk = fs.read(handle, math.huge)
-    --    ctx = ctx .. (chunk or "")
-    --until not chunk
-
-    --explorer.gdi32.SelectObject(hdc, explorer.gdi32.CreateSolidBrush(0xFFFFFF))
-    --explorer.gdi32.PatBlt(hdc, 10, 30, 60, 22, explorer.gdi32.PATCOPY)
-    --explorer.gdi32.SelectObject(hdc, explorer.gdi32.CreateSolidBrush(0x000080))
-    --explorer.gdi32.PatBlt(hdc, 10, 30, 60, 1, explorer.gdi32.PATCOPY)
-    --explorer.gdi32.SetTextColor(0xFFFFFF)
-    --explorer.gdi32.TextOut(hdc, 11, 30, "Notepad - "..path)
-    --explorer.gdi32.SetTextColor(0x000000)
-    --local y=31
-    --for line in ctx:gmatch("[^\r\n]+") do
-    --    explorer.gdi32.TextOut(hdc, 12, y, line)
-    --    y=y+1
-    --    if y>59 then break end
-    --end
-
-    --explorer.gdi32.SetTextColor(0xAA0000)
-    --explorer.gdi32.TextOut(hdc, 67, 30, "[X]")
-    --table.insert(explorer.modalBtns, {btn="CLOSE_EDT", x=67,y=30,w=3,h=1 })
 end
 
 function explorer.UpdateTime(PTIME_FIELDS)
@@ -746,7 +717,6 @@ function explorer.OpenWinNTSetup(gdi, gpu, s32)
         gdi.SetTextColor(hdc, 0xFFFFFF)
         gdi.TextOut(hdc, x + 2, y + 1, "Windows NT Setup Wizard")
         
-        gdi.SetTextColor(hdc, 0x000000)
         gdi.SetBkMode(hdc, gdi.TRANSPARENT)
 
         if stage == 1 then
@@ -767,14 +737,14 @@ function explorer.OpenWinNTSetup(gdi, gpu, s32)
                         gdi.PatBlt(hdc, x + 4, yPos, w - 8, 1, gdi.PATCOPY)
                         gdi.SetTextColor(hdc, 0xFFFFFF)
                     else
-                        gdi.SetTextColor(hdc, 0x000000)
+                        gdi.SetTextColor(hdc, 0x00FF00)
                     end
                     local lbl = drv.proxy.getLabel() or "Local Disk"
                     gdi.TextOut(hdc, x + 5, yPos, string.format("%s - %s (%s...) ", drv.letter, lbl, drv.proxy.address:sub(1,6)))
                 end
             end
             
-            gdi.SetTextColor(hdc, 0x000000)
+            gdi.SetTextColor(hdc, 0xFFFFFF)
             gdi.TextOut(hdc, x + 3, y + h - 3, "Use [^v] to select, [ENTER] to Install, [ESC] to Cancel")
 
         elseif stage == 2 then
@@ -790,13 +760,13 @@ function explorer.OpenWinNTSetup(gdi, gpu, s32)
                 gdi.PatBlt(hdc, x + 6, y + 10, progressW, 1, gdi.PATCOPY)
             end
             
-            gdi.SetTextColor(hdc, 0x000000)
+            gdi.SetTextColor(hdc, 0xFFFFFF)
             gdi.TextOut(hdc, x + math.floor(w/2) - 2, y + 12, tostring(progress) .. "%")
 
         elseif stage == 3 then
             gdi.SetTextColor(hdc, 0x008000)
             gdi.TextOut(hdc, x + 3, y + 4, "SUCCESS! Windows NT has been installed successfully.")
-            gdi.SetTextColor(hdc, 0x000000)
+            gdi.SetTextColor(hdc, 0xFFFFFF)
             gdi.TextOut(hdc, x + 3, y + 6, "The boot sector on target drive has been updated.")
             gdi.TextOut(hdc, x + 3, y + 8, "Please remove any floppy disks from the drives.")
             
@@ -1003,11 +973,9 @@ function explorer.RunDialog(gdi, gpu, s32)
     local input = ""
 
     local function redraw()
-        -- Фон вікна
         gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xC0C0C0))
         gdi.PatBlt(hdc, x, y, w, h, gdi.PATCOPY)
 
-        -- Рамка 3D
         gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xFFFFFF))
         gdi.PatBlt(hdc, x, y, w, 1, gdi.PATCOPY)
         gdi.PatBlt(hdc, x, y, 1, h, gdi.PATCOPY)
@@ -1015,20 +983,17 @@ function explorer.RunDialog(gdi, gpu, s32)
         gdi.PatBlt(hdc, x + w - 1, y, 1, h, gdi.PATCOPY)
         gdi.PatBlt(hdc, x, y + h - 1, w, 1, gdi.PATCOPY)
 
-        -- Заголовок
         gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
         gdi.PatBlt(hdc, x + 1, y + 1, w - 2, 1, gdi.PATCOPY)
         gdi.SetTextColor(hdc, 0xFFFFFF)
         gdi.SetBkColor(hdc, 0x000080)
         gdi.TextOut(hdc, x + 2, y + 1, "Run")
 
-        -- Текст
-        gdi.SetTextColor(hdc, 0x000000)
+        gdi.SetTextColor(hdc, 0xFFFFFF)
         gdi.SetBkColor(hdc, 0xC0C0C0)
         gdi.TextOut(hdc, x + 2, y + 3, "Type the name of a program, and")
         gdi.TextOut(hdc, x + 2, y + 4, "LuaNT will open it for you.")
 
-        -- Поле вводу
         gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xFFFFFF))
         gdi.PatBlt(hdc, x + 2, y + 5, w - 4, 1, gdi.PATCOPY)
         gdi.SetTextColor(hdc, 0x000000)
@@ -1047,22 +1012,18 @@ function explorer.RunDialog(gdi, gpu, s32)
 
             if code == 28 then  -- ENTER
                 if #input > 0 then
-                    -- ===== ПРЯМИЙ ЗАПУСК ЧЕРЕЗ PsCreateSystemThread =====
                     local fs = component.proxy(computer.getBootAddress())
                     local path = input
 
-                    -- Нормалізуємо шлях: прибираємо слеш на початку, якщо є
                     path = path:gsub("^/", "")
 
-                    -- Якщо не вказано розширення, додаємо .lua
                     if not path:match("%.lua$") then
                         path = path .. ".lua"
                     end
 
-                    -- Шукаємо файл у кількох місцях
                     local foundPath = nil
                     local searchPaths = {
-                        path,                          -- як ввели
+                        path,
                         "Windows/System32/" .. path,   -- System32
                         "Windows/" .. path,            -- Windows
                         "Program Files/" .. path,      -- Program Files
@@ -1084,7 +1045,6 @@ function explorer.RunDialog(gdi, gpu, s32)
                         end
                     else
                         DbgPrint("RUN: File not found: " .. input)
-                        -- Можна показати вікно помилки через winerror
                         if _G.RpcSs then
                             _G.RpcSs.RpcCliExecute("IErrorHandler", "ShowError",
                                 "Run", "File Not Found",
@@ -1119,8 +1079,7 @@ function explorer.ColorSetup(gdi, gpu, s32)
     local x = math.floor((explorer.screen.width - w) / 2)
     local y = math.floor((explorer.screen.height - h) / 2)
 
-    -- Читаємо поточний режим з screen.ini
-    local currentMode = 2  -- за замовчуванням 256bit
+    local currentMode = 2
     local fs = component.proxy(computer.getBootAddress())
     local iniPath = "Windows/System32/screen.ini"
 
@@ -1140,7 +1099,7 @@ function explorer.ColorSetup(gdi, gpu, s32)
         { id = 2, name = "256 colors (8-bit)",  desc = "Full color palette" }
     }
 
-    local selected = currentMode + 1  -- 1-based index
+    local selected = currentMode + 1
     local statusText = "Current: " .. modes[selected].name
 
     local function SaveMode(modeId)
@@ -1168,33 +1127,34 @@ function explorer.ColorSetup(gdi, gpu, s32)
         gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
         gdi.PatBlt(hdc, x + 1, y + 1, w - 2, 1, gdi.PATCOPY)
         gdi.SetTextColor(hdc, 0xFFFFFF)
-        gdi.SetBkColor(hdc, 0x000080)
+        gdi.SetBkColor(hdc, 0x000000)
         gdi.TextOut(hdc, x + 2, y + 1, " Display Properties - Color Setup")
         gdi.SetTextColor(hdc, 0xFF0000)
         gdi.TextOut(hdc, x + w - 4, y + 1, "[X]")
 
-        gdi.SetTextColor(hdc, 0x000000)
-        gdi.SetBkColor(hdc, 0xC0C0C0)
+        gdi.SetTextColor(hdc, 0xFFFFFF)
+        gdi.SetBkColor(hdc, 0x808080)
+        gdi.SetBkMode(1)
         gdi.TextOut(hdc, x + 2, y + 3, "Select color depth for this display:")
         gdi.TextOut(hdc, x + 2, y + 4, "──────────────────────────────────")
 
         for i, mode in ipairs(modes) do
-            local lineY = y + 5 + i
+            local lineY = y + 4 + i
             local marker = (i == selected) and "> " or "  "
 
             if i == selected then
                 gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
                 gdi.PatBlt(hdc, x + 2, lineY, w - 4, 1, gdi.PATCOPY)
-                gdi.SetTextColor(hdc, 0xFFFFFF)
+                gdi.SetTextColor(hdc, 0x00FF00)
             else
-                gdi.SetTextColor(hdc, 0x000000)
+                gdi.SetTextColor(hdc, 0xFFFFFF)
             end
 
             gdi.TextOut(hdc, x + 3, lineY,
                 marker .. mode.name .. " - " .. mode.desc)
         end
 
-        gdi.SetTextColor(hdc, 0x000000)
+        gdi.SetTextColor(hdc, 0xFFFFFF)
         gdi.SetBkColor(hdc, 0xC0C0C0)
         gdi.TextOut(hdc, x + 2, y + h - 4, "Status: " .. statusText:sub(1, w - 10))
 
@@ -1219,6 +1179,9 @@ function explorer.ColorSetup(gdi, gpu, s32)
             local char, code = signal[3], signal[4]
 
             if code == 203 then  -- <
+                gdi.SetBkColor(hdc, 0x008080)
+                gdi.PatBlt(hdc, x, y, w, 1, gdi.PATCOPY)
+                gdi.PatBlt(hdc, x, y, 1, h, gdi.PATCOPY)
                 return
 
             elseif code == 200 then  -- UP
@@ -1249,18 +1212,19 @@ function explorer.ColorSetup(gdi, gpu, s32)
             elseif char == 51 then selected = 3 statusText = modes[3].name DrawDialog()
             end
 
-            coroutine.yield()
-
         elseif event == "touch" then
             local tx, ty = signal[3], signal[4]
             local btnY = y + h - 2
 
             if ty == y + 1 and tx >= x + w - 5 then
+                gdi.SetBkColor(hdc, 0x008080)
+                gdi.PatBlt(hdc, x, y, w, 1, gdi.PATCOPY)
+                gdi.PatBlt(hdc, x, y, 1, h, gdi.PATCOPY)
                 return
             end
 
             for i = 1, #modes do
-                local lineY = y + 5 + i
+                local lineY = y + 4 + i
                 if ty == lineY and tx >= x + 2 and tx <= x + w - 3 then
                     selected = i
                     statusText = "Selected: " .. modes[i].name
@@ -1284,8 +1248,143 @@ function explorer.ColorSetup(gdi, gpu, s32)
 
             coroutine.yield()
         end
+    end
+end
 
-        coroutine.yield()
+function explorer.ShowSystemProperties(gdi, gpu, s32)
+    local hdc = gdi.GetDC(0)
+    local screenW, screenH = _G.HAL.w, _G.HAL.h
+
+    local winW, winH = 56, 18
+    local winX = math.floor((screenW - winW) / 2)
+    local winY = math.floor((screenH - winH) / 2)
+
+    local clientX = winX + 1
+    local clientY = winY + 2
+    local clientW = winW - 2
+    local clientH = winH - 3
+
+    local regedit = _G.regedit0
+
+    local version = "Unknown"
+    if regedit then
+        version = regedit.GetValue("\\Software\\RedstoneShell\\Windows NT\\CurrentVersion", "CurrentVersion") or "Unknown"
+    end
+
+    -- GPU
+    local gpu_proxy = component.proxy(component.list("gpu")())
+    local maxDepth = gpu_proxy.maxDepth and gpu_proxy.maxDepth() or "N/A"
+    local curDepth = gpu_proxy.getDepth and gpu_proxy.getDepth() or "N/A"
+
+    local w, h = gpu_proxy.getResolution()
+    local resolution = w .. "x" .. h
+
+    local architecture = computer.getArchitecture() or "Unknown"
+
+    local modemStatus = "Not Installed"
+    local modem_addr = component.list("modem")()
+    if modem_addr then
+        local modem = component.proxy(modem_addr)
+        if modem.isWireless then
+            modemStatus = modem.isWireless() and "WiFi" or "ADSL"
+        else
+            modemStatus = "Wired"
+        end
+    end
+
+    local inetStatus = {"N/A","N/A"}
+    local inet_addr = component.list("internet")()
+    if inet_addr then
+        local inet = component.proxy(inet_addr)
+        inetStatus[1] = tostring(inet.isTcpEnabled()) or "N/A"
+        inetStatus[2] = tostring(inet.isHttpEnabled()) or "N/A"
+    end
+
+    local function DrawWindow()
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xC0C0C0))
+        gdi.PatBlt(hdc, winX, winY, winW, winH, gdi.PATCOPY)
+
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xFFFFFF))
+        gdi.PatBlt(hdc, winX, winY, winW, 1, gdi.PATCOPY)
+        gdi.PatBlt(hdc, winX, winY, 1, winH, gdi.PATCOPY)
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x808080))
+        gdi.PatBlt(hdc, winX, winY + winH - 1, winW, 1, gdi.PATCOPY)
+        gdi.PatBlt(hdc, winX + winW - 1, winY, 1, winH, gdi.PATCOPY)
+
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
+        gdi.PatBlt(hdc, winX + 1, winY + 1, winW - 2, 1, gdi.PATCOPY)
+        gdi.SetTextColor(hdc, 0xFFFFFF)
+        gdi.SetBkColor(hdc, 0x000080)
+        gdi.TextOut(hdc, winX + 2, winY + 1, " System & Hardware Info")
+        gdi.SetTextColor(hdc, 0xFF0000)
+        gdi.TextOut(hdc, winX + winW - 4, winY + 1, "[X]")
+
+        local lines = {
+            { "Operation System:", "LuaNT " .. version, 0xFFFFFF },
+            { "Manufacturer:", "RedstoneShell", 0xFFFFFF },
+            { "", "", 0xFFFFFF },
+            { "Max Depth:", tostring(maxDepth), 0xFFFFFF },
+            { "Current Depth:", tostring(curDepth), 0xFFFFFF },
+            { "Screen resolution:", resolution, 0xFFFFFF },
+            { "", "", 0xFFFFFF },
+            { "Architecture:", architecture, 0xFFFFFF },
+            { "DHCP Modem:", modemStatus, 0xFFFFFF },
+            { "", "", 0xFFFFFF },
+            { "TCP:", inetStatus[1], 0xFFFFFF },
+            { "HTTP(S):", inetStatus[2], 0xFFFFFF }
+        }
+
+        local lineY = clientY
+        for _, line in ipairs(lines) do
+            if line[1] ~= "" then
+                gdi.SetTextColor(hdc, 0xFFFFFF)
+                gdi.SetBkColor(hdc, 0xC0C0C0)
+                gdi.TextOut(hdc, clientX + 2, lineY, line[1])
+
+                gdi.SetTextColor(hdc, line[3])
+                gdi.TextOut(hdc, clientX + 22, lineY, line[2]:sub(1, clientW - 24))
+            end
+            lineY = lineY + 1
+        end
+
+        local btnY = winY + winH - 2
+        gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xE0E0E0))
+        gdi.PatBlt(hdc, winX + winW - 12, btnY, 10, 2, gdi.PATCOPY)
+        gdi.SetTextColor(hdc, 0x000000)
+        gdi.SetBkColor(hdc, 0xE0E0E0)
+        gdi.TextOut(hdc, winX + winW - 11, btnY, "[  OK  ]")
+    end
+
+    DrawWindow()
+
+    while true do
+        local signal = { computer.pullSignal(0.2) }
+        local event = signal[1]
+
+        if event == "key_down" then
+            local code = signal[4]
+            if code == 1 or code == 28 then
+                gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x008080))
+                gdi.PatBlt(hdc, winX, winY, winW, winH, gdi.PATCOPY)
+                return
+            end
+
+        elseif event == "touch" then
+            local tx, ty = signal[3], signal[4]
+            local btnY = winY + winH - 2
+
+            if ty == winY + 1 and tx >= winX + winW - 5 then
+                gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x008080))
+                gdi.PatBlt(hdc, winX, winY, winW, winH, gdi.PATCOPY)
+                return
+            end
+
+            if ty == btnY and tx >= winX + winW - 12 and tx < winX + winW - 2 then
+                gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x008080))
+                gdi.PatBlt(hdc, winX, winY, winW, winH, gdi.PATCOPY)
+                return
+            end
+        end
     end
 end
 
