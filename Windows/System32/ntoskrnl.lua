@@ -157,11 +157,6 @@ local screen_gdi = gdi32.GdiDllInitialize(_G.HAL.gpu)
 _G.KRNL_GDI32=gdi32
 _G.regedit0=regedit
 
-if regedit.KeyExists("\\Software\\RedstoneShell\\Windows\\CurrentVersion\\WinSAT", nil) then
-    local winsat,_ = LdrLoadDll("Windows/System32/winsat.lua")
-    winsat.start()
-end
-
 -- Multi-task init
 DbgPrint("KE: KiInitializeDispatcher - Allocating 32 thread priority queues")
 local ReadyQueues = {}
@@ -514,6 +509,7 @@ end
 
 local function LoadDriver(file)
     local serviceName = file:gsub("%.lua$", "")
+    local regPath = "\\Software\\RedstoneShell\\Windows\\CurrentControlSet\\Services\\" .. serviceName
     local drv_path = "Windows/System32/drivers/" .. file
     local errorControl = regedit.GetValue("\\Software\\RedstoneShell\\Windows\\CurrentControlSet\\Services\\" .. serviceName, "ErrorControl")
     if errorControl == nil then
