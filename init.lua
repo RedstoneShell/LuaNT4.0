@@ -1,5 +1,14 @@
 -- Windows NT Boot Loader by RedstoneShell
 
+local orig = computer.getBootAddress
+function computer.getBootAddress()
+    if orig()==nil then
+        return component.proxy(component.disk_drive.media())
+    else
+        return orig()
+    end
+end
+
 local c = component
 local comp = computer
 local screen = component.list("screen", true)()
