@@ -3,6 +3,7 @@
 local orig = computer.getBootAddress
 function computer.getBootAddress()
     if orig()==nil then
+        if _G.CachedBootAddress~=nil then return _G.CachedBootAddress end
         return component.proxy(component.disk_drive.media())
     else
         return orig()
@@ -14,6 +15,9 @@ local comp = computer
 local screen = component.list("screen", true)()
 local gpu = screen and component.list("gpu", true)()
 local pc_io = c.proxy(comp.getBootAddress())
+
+_G.CachedBootAddress =comp.getBootAddress() -- Special variable to don't crash LuaNT at BIOS remove
+if pc_io.exists("t2cm") then _G.Tier2CM=true end
 
 pc_io.remove("/ntbootdd.log")
 
@@ -86,46 +90,6 @@ function HAL.initVideo()
     end
 end
 
-local function LoadBootIni()
-    _G.KeRelayDbgAtSignal = false
-    
-    local bootFS = component.proxy(computer.getBootAddress())
-    if not bootFS then
-        DbgPrint("BOOT: No boot filesystem available")
-        return
-    end
-    
-    if not bootFS.exists("/boot.ini") then
-        DbgPrint("BOOT: /boot.ini not found, using defaults")
-        return
-    end
-    
-    local handle, err = bootFS.open("/boot.ini", "r")
-    if not handle then
-        DbgPrint("BOOT: Failed to open /boot.ini: " .. tostring(err))
-        return
-    end
-    
-    local content = ""
-    while true do
-        local chunk = bootFS.read(handle, 512)
-        if not chunk then break end
-        content = content .. chunk
-    end
-    bootFS.close(handle)
-    
-    for line in content:gmatch("[^\r\n]+") do
-        if not line:match("^%s*;") and not line:match("^%s*$") then
-            local key, value = line:match("^%s*([^=]+)%s*=%s*(.-)%s*$")
-            if key and value then
-                if key == "relayDbgAtSignal" then
-                    _G.KeRelayDbgAtSignal = (value:lower() == "true" or value == "1")
-                end
-            end
-        end
-    end
-end
-
 local print=_G.DbgPrint
 _G.KeBugCheckEx = function (bugCheckCode, bugCode0, bugCode1)
     print("***STOP:"..bugCheckCode..", BugCode0: "..bugCode0..", BugCode1: "..bugCode1)
@@ -185,8 +149,6 @@ local function wait(s)
     end
 end
 
-LoadBootIni()
-
 
 
 _G.CmosSettings = _G.CmosSettings or {
@@ -241,6 +203,7 @@ end
 computer.beep(1000, 0.1)
 HAL.initVideo()
 DbgPrint("Windows NT Boot Loader")
+if _G.Tier2CM then DbgPrint("LuaNT: Enabled Tier 2 COMPATIBLE MODE. Delete file `t2cm` to disable this mode.") end
 DbgPrint("Detecting hardware...")
 if not HAL.gpu then
     error("No GPU found! System halted.")
