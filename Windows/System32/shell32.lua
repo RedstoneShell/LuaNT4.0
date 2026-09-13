@@ -1,6 +1,11 @@
 local shell32 = {}
 local lCt, lCI = 0, ""
 
+-- ===== LDM (Low Display Mode) =====
+-- Якщо _G.Tier2CM == true, використовуємо спрощені іконки
+local LDM = _G.Tier2CM == true
+
+-- ===== Іконки =====
 shell32.Icons = {
     MyPC = {
         "------",
@@ -74,7 +79,7 @@ shell32.Icons = {
         "| |   ",
         "| +==="
     },
-    AppCenter={
+    AppCenter = {
         "/----|",
         "| Lua|",
         "| SMS|",
@@ -82,40 +87,116 @@ shell32.Icons = {
     }
 }
 
+-- ===== LDM іконки (спрощені) =====
+shell32.LDMIcons = {
+    MyPC = {
+        "[PC]",
+        "────",
+    },
+    YesNetwork = {
+        "[NET]",
+        "─────",
+    },
+    NoNetwork = {
+        "[NET]",
+        "──/──",
+    },
+    RecycleBin = {
+        "[BIN]",
+        "─────",
+    },
+    Drive = {
+        "[HDD]",
+        "─────",
+    },
+    Drive_Error = {
+        "[HDD]",
+        "──!──",
+    },
+    Floppy = {
+        "[FLP]",
+        "─────",
+    },
+    SetupMgr = {
+        "[SET]",
+        "─────",
+    },
+    StartButton = {
+        "[NT]",
+        "────",
+    },
+    Notepad = {
+        "[TXT]",
+        "─────",
+    },
+    Minesweeper = {
+        "[MIN]",
+        "─────",
+    },
+    IE = {
+        "[IE]",
+        "────",
+    },
+    AppCenter = {
+        "[SMS]",
+        "─────",
+    }
+}
+
 shell32.DeskIcon = {}
 
+-- ===== Реєстрація іконки =====
 function shell32.RegisterIcon(icon, x, y, w, h, callback)
     shell32.DeskIcon[icon] = {
-        x=x,y=y,w=w,h=h,
-        callback=callback
+        x = x,
+        y = y,
+        w = w,
+        h = h,
+        callback = callback
     }
 end
 
+-- ===== Реєстрація іконки (з table y) =====
 function shell32.RegisterIcon(icon, x, yTable, w, h, callback)
     shell32.DeskIcon[icon] = {
-        x=x,y=yTable,w=w,h=h,
-        callback=callback
+        x = x,
+        y = yTable,
+        w = w,
+        h = h,
+        callback = callback
     }
 end
 
+-- ===== Видалення іконки =====
 function shell32.UnregIcon(icon, x, y)
     local srch = shell32.DeskIcon[icon]
-    if srch==nil then return end
-    if srch.x==x and srch.y==y then
-        srch.callback=nil
+    if srch == nil then return end
+    if srch.x == x and srch.y == y then
+        srch.callback = nil
     end
 end
 
+-- ===== Малювання іконки =====
 function shell32.DrawIcon(hdc, gdi, bkColor, x, y, iconName, label)
-    local icon = shell32.Icons[iconName]
+    -- Вибираємо набір іконок залежно від LDM
+    local iconSet = LDM and shell32.LDMIcons or shell32.Icons
+    local icon = iconSet[iconName]
+    
+    if not icon then
+        -- Fallback на звичайні іконки, якщо LDM не має цієї іконки
+        icon = shell32.Icons[iconName]
+    end
+    
     if not icon then return false end
     
+    -- Малюємо іконку
     for i, line in ipairs(icon) do
         gdi.SetTextColor(hdc, bkColor)
         gdi.TextOut(hdc, x, y + i - 1, line)
     end
     
-    if label and #label>5 then
+    -- Малюємо підпис
+    if label and #label > 5 then
         local labelWidth = #label
         local iconWidth = 0
         for _, line in ipairs(icon) do
@@ -128,45 +209,52 @@ function shell32.DrawIcon(hdc, gdi, bkColor, x, y, iconName, label)
         gdi.SetTextColor(hdc, bkColor)
         gdi.TextOut(hdc, centerX, y + #icon, label)
     else
-        gdi.SetTextColor(bkColor)
-        gdi.TextOut(hdc, x-1, y+#icon, label)
+        gdi.SetTextColor(hdc, bkColor)
+        gdi.TextOut(hdc, x - 1, y + #icon, label)
     end
     
     return true
 end
+
+-- ===== Обробка кліку =====
 function shell32.HandleClick(clickX, clickY, button)
     local cT = computer.uptime()
+    
     for name, icon in pairs(shell32.DeskIcon) do
-        if type(icon.y)=="table" then
+        if type(icon.y) == "table" then
             for i, y in ipairs(icon.y) do
-                if clickX>=icon.x and clickX<=(icon.x+icon.w) and clickY>=y and clickY<=(y+icon.h) then
-                    if cT-lCt<0.5 and lCI==name then
-                        DbgPrint("SHELL32: Icon clicked: "..name)
-                        icon.callback({ [1]="OPEN", [2]=i})
-                    elseif button==1 then
-                        icon.callback({ [1]="MENU", click={clickX, clickY}, [2]=i})
+                if clickX >= icon.x and clickX <= (icon.x + icon.w) and
+                   clickY >= y and clickY <= (y + icon.h) then
+                   
+                    if cT - lCt < 0.5 and lCI == name then
+                        DbgPrint("SHELL32: Icon clicked: " .. name)
+                        icon.callback({ [1] = "OPEN", [2] = i })
+                    elseif button == 1 then
+                        icon.callback({ [1] = "MENU", click = { clickX, clickY }, [2] = i })
                     else
-                        DbgPrint("SHELL32: Selected "..name)
+                        DbgPrint("SHELL32: Selected " .. name)
                     end
 
-                    lCt=cT
-                    lCI=name
+                    lCt = cT
+                    lCI = name
                     return true
                 end
             end
         else
-            if clickX>=icon.x and clickX<=(icon.x+icon.w) and clickY>=icon.y and clickY<=(icon.y+icon.h) then
-                if cT-lCt<0.5 and lCI==name and icon.callback then
-                    DbgPrint("SHELL32: Icon clicked: "..name)
-                    icon.callback({ [1]="OPEN"})
-                elseif button==1 and icon.callback then
-                    icon.callback({ [1]="MENU", click={clickX, clickY}})
+            if clickX >= icon.x and clickX <= (icon.x + icon.w) and
+               clickY >= icon.y and clickY <= (icon.y + icon.h) then
+               
+                if cT - lCt < 0.5 and lCI == name and icon.callback then
+                    DbgPrint("SHELL32: Icon clicked: " .. name)
+                    icon.callback({ [1] = "OPEN" })
+                elseif button == 1 and icon.callback then
+                    icon.callback({ [1] = "MENU", click = { clickX, clickY } })
                 else
-                    DbgPrint("SHELL32: Selected "..name)
+                    DbgPrint("SHELL32: Selected " .. name)
                 end
 
-                lCt=cT
-                lCI=name
+                lCt = cT
+                lCI = name
                 return true
             end
         end

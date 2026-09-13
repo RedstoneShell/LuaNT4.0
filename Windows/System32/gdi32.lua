@@ -1,7 +1,5 @@
--- gdi32.lua - GDI32 для LuaNT
+-- gdi32.lua - GDI32 for LuaNT
 -- (C) RedstoneShell 2026
--- Підтримує screen.ini: 0=Monochrome, 1=16 colors, 2=256 colors
-
 local GDI = {
     COLOR_BLUE      = 0x0000AA,
     COLOR_GRAY      = 0xAAAAAA,
@@ -18,13 +16,8 @@ GDI.DSTINVERT   = 3550009
 GDI.BLACKNESS   = 3000042
 GDI.WHITENESS   = 3176062
 
--- ===== Кольоровий режим =====
--- 0 = Monochrome (1-bit)
--- 1 = 16 colors (4-bit)
--- 2 = 256 colors (8-bit)
 GDI.ColorMode = 2
 
--- ===== CGA 16-колірна палітра =====
 local CGA_PALETTE = {
     0x000000, 0x0000AA, 0x00AA00, 0x00AAAA,
     0xAA0000, 0xAA00AA, 0xAA5500, 0xAAAAAA,
@@ -32,13 +25,12 @@ local CGA_PALETTE = {
     0xFF5555, 0xFF55FF, 0xFFFF55, 0xFFFFFF
 }
 
--- ===== Завантажити screen.ini =====
 local function LoadScreenIni()
     local fs = component.proxy(computer.getBootAddress())
     local path = "Windows/System32/screen.ini"
 
     if not fs.exists(path) then
-        GDI.ColorMode = 2  -- за замовчуванням 256 colors
+        GDI.ColorMode = 2
         DbgPrint("GDI32: screen.ini not found, using default 256-color mode")
         return 2
     end
@@ -58,7 +50,6 @@ local function LoadScreenIni()
     end
     fs.close(file)
 
-    -- Парсимо screen=N
     local mode = content:match("screen=(%d+)")
     if mode then
         mode = tonumber(mode)
@@ -74,26 +65,21 @@ local function LoadScreenIni()
     return 2
 end
 
--- ===== Застосувати кольоровий режим (з захистом від nil) =====
 local function ApplyColorMode(color)
-    -- Захист від nil
     if color == nil then
         color = 0x000000
     end
 
-    -- Захист від не-числа
     if type(color) ~= "number" then
         color = tonumber(color) or 0x000000
     end
 
-    -- Обмежуємо діапазон 0x000000 - 0xFFFFFF
     color = math.floor(color) % 0x1000000
     if color < 0 then
         color = color + 0x1000000
     end
 
     if GDI.ColorMode == 0 then
-        -- Monochrome: ч/б
         local r = math.floor(color / 65536) % 256
         local g = math.floor(color / 256) % 256
         local b = color % 256
@@ -105,7 +91,6 @@ local function ApplyColorMode(color)
         end
 
     elseif GDI.ColorMode == 1 then
-        -- 16 colors: квантизація до CGA
         local best = CGA_PALETTE[1]
         local bestDist = math.huge
         local r1 = math.floor(color / 65536) % 256
@@ -125,18 +110,14 @@ local function ApplyColorMode(color)
         return best
     end
 
-    return color  -- 256 colors: без змін
+    return color
 end
 
--- ===== Експорт для інших модулів =====
 GDI.ApplyColorMode = ApplyColorMode
 
--- ===== Object Table =====
 local GDI_ObjectTable, last_handle = {}, 0
 
--- ===== Ініціалізація =====
 function GDI.GdiDllInitialize(gpu_proxy)
-    -- Читаємо screen.ini при старті
     LoadScreenIni()
 
     local wi, he = gpu_proxy.getResolution()
@@ -161,7 +142,6 @@ function GDI.GdiDllInitialize(gpu_proxy)
     return true
 end
 
--- ===== Створення DC =====
 function GDI.CreateDC(gpu_proxy)
     last_handle = last_handle + 1
     local hdc_id = last_handle
@@ -193,7 +173,6 @@ local function InvCrl(clr)
     return 0xFFFFFF - (clr or 0)
 end
 
--- ===== PatBlt =====
 function GDI.PatBlt(hdc, x, y, w, h, dwRop)
     local hdc_h = ValidateHDC(hdc)
     local gpu   = hdc_h.gpu
@@ -218,7 +197,6 @@ function GDI.PatBlt(hdc, x, y, w, h, dwRop)
     return true
 end
 
--- ===== SetTextColor =====
 function GDI.SetTextColor(hdc, color)
     local hdc_h = ValidateHDC(hdc)
     local oldClr = hdc_h.textColor
@@ -226,7 +204,6 @@ function GDI.SetTextColor(hdc, color)
     return oldClr
 end
 
--- ===== CreateSolidBrush =====
 function GDI.CreateSolidBrush(clr)
     return {
         type = "BRUSH",
@@ -234,7 +211,6 @@ function GDI.CreateSolidBrush(clr)
     }
 end
 
--- ===== SelectObject =====
 function GDI.SelectObject(hdc_, hObj)
     if not hObj then return nil end
     local oldB, hdc = 0, ValidateHDC(hdc_)
@@ -245,7 +221,6 @@ function GDI.SelectObject(hdc_, hObj)
     return oldB
 end
 
--- ===== SetBkMode =====
 function GDI.SetBkMode(hdc, mode)
     local hdc_h = ValidateHDC(hdc)
     local oldM = hdc_h.bkMode or 2
@@ -255,7 +230,6 @@ function GDI.SetBkMode(hdc, mode)
     return oldM
 end
 
--- ===== SetBkColor =====
 function GDI.SetBkColor(hdc_, clr)
     local hdc = ValidateHDC(hdc_)
     if not hdc then return end
@@ -264,7 +238,6 @@ function GDI.SetBkColor(hdc_, clr)
     return oldClr
 end
 
--- ===== TextOut =====
 function GDI.TextOut(hdc, x, y, text)
     if not text then return false end
     local hdc_h = ValidateHDC(hdc)
@@ -273,6 +246,7 @@ function GDI.TextOut(hdc, x, y, text)
     if hdc_h.bkMode == 2 then
         gpu.setBackground(ApplyColorMode(hdc_h.bkColor))
     end
+    if _G.Tier2CM==true then gpu.setBackground(0x4C4C4C) end
     gpu.set(x, y, text)
     return true
 end

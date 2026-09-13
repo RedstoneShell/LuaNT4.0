@@ -598,6 +598,10 @@ if regedit.GetValue(rpcRegPath, "Start") == nil then
     regedit.SetValue(rpcRegPath, "DependOnService", "RpcSs")
 end
 
+if _G.Tier2CM then
+    regedit.SetValue(rpcRegPath, "ImagePath", "")
+end
+
 DbgPrint("ntoskrnl: Loading BOOT drivers...")
 for _, file in ipairs(bootDrivers) do
     LoadDriver(file)
@@ -1058,6 +1062,10 @@ function KiInterruptDispatch(sig, addr, arg1, arg2, arg3, arg4)
             end
         end
     elseif sig == "touch" then
+        if wls then
+            winlogon.HandleClick(arg1, arg2)
+        end
+
         if s32 and s32.HandleClick then 
             s32.HandleClick(arg1, arg2, arg3) 
         end

@@ -2,36 +2,89 @@ local winlogon, gdi, HAL, csr, s32 = {}, nil, nil, nil, nil
 
 local currentUser = "Administrator"
 local enteredPassword = ""
-local inputStage = "username" 
+local inputStage = "username"
 local winX, winY, winW, winH, hdc
+local t2ButtonX, t2ButtonY = 1, 1
+local t2ButtonW, t2ButtonH = 14, 1
+
+local function IsTier2ModeEnabled()
+    local fs = component.proxy(computer.getBootAddress())
+    return fs.exists("/t2cm")
+end
+
+local function ToggleTier2Mode()
+    local fs = component.proxy(computer.getBootAddress())
+
+    if IsTier2ModeEnabled() then
+        fs.remove("/t2cm")
+        DbgPrint("WINLOGON: Tier 2 Mode DISABLED")
+    else
+        local f = fs.open("/t2cm", "w")
+        if f then
+            fs.write(f, "Tier2Mode=1\n")
+            fs.close(f)
+            DbgPrint("WINLOGON: Tier 2 Mode ENABLED")
+        end
+    end
+
+    DbgPrint("WINLOGON: Rebooting in 1 second...")
+    _G.KeDelayExecutionThread(1)
+    computer.shutdown(true)
+end
+
+local function DrawTier2Button()
+    local enabled = IsTier2ModeEnabled()
+
+    local bgColor = enabled and 0x00AA00 or 0xAA0000
+    local brush = gdi.CreateSolidBrush(bgColor)
+    gdi.SelectObject(hdc, brush)
+    gdi.PatBlt(hdc, t2ButtonX, t2ButtonY, t2ButtonW, t2ButtonH, 3160021)
+
+    local whiteBrush = gdi.CreateSolidBrush(0xFFFFFF)
+    gdi.SelectObject(hdc, whiteBrush)
+    gdi.PatBlt(hdc, t2ButtonX, t2ButtonY, t2ButtonW, 1, 3160021)
+    gdi.PatBlt(hdc, t2ButtonX, t2ButtonY, 1, t2ButtonH, 3160021)
+
+    local grayBrush = gdi.CreateSolidBrush(0x808080)
+    gdi.SelectObject(hdc, grayBrush)
+    gdi.PatBlt(hdc, t2ButtonX, t2ButtonY + t2ButtonH - 1, t2ButtonW, 1, 3160021)
+    gdi.PatBlt(hdc, t2ButtonX + t2ButtonW - 1, t2ButtonY, 1, t2ButtonH, 3160021)
+
+    gdi.SetTextColor(hdc, 0xFFFFFF)
+    gdi.SetBkColor(hdc, bgColor)
+    gdi.TextOut(hdc, t2ButtonX + 1, t2ButtonY, "T2 Mode: " .. (enabled and "ON " or "OFF"))
+end
 
 function winlogon.RedrawLogonBox()
+    DrawTier2Button()
+
     local brush = gdi.CreateSolidBrush(0x000000)
     gdi.SelectObject(hdc, brush)
-    gdi.PatBlt(hdc, winX+1, winY+1, winW, winH, 3160021)
-    
+    gdi.PatBlt(hdc, winX + 1, winY + 1, winW, winH, 3160021)
+
     brush = gdi.CreateSolidBrush(0xCCCCCC)
     gdi.SelectObject(hdc, brush)
     gdi.PatBlt(hdc, winX, winY, winW, winH, 3160021)
-    
-    brush = gdi.CreateSolidBrush(0x000080) 
+
+    brush = gdi.CreateSolidBrush(0x000080)
     gdi.SelectObject(hdc, brush)
-    gdi.PatBlt(hdc, winX+1, winY+1, winW-2, 3, 3160021)
-    
+    gdi.PatBlt(hdc, winX + 1, winY + 1, winW - 2, 3, 3160021)
+
     gdi.SetTextColor(hdc, 0xFFFFFF)
-    gdi.TextOut(hdc, winX+2, winY+2, "Logon Information")
-    
-    gdi.TextOut(hdc, winX+4, winY+5, "Enter your credentials to log on.")
-    
+    gdi.SetBkColor(hdc, 0x000080)
+    gdi.TextOut(hdc, winX + 2, winY + 2, "Logon Information")
+
+    gdi.SetTextColor(hdc, 0x000000)
+    gdi.SetBkColor(hdc, 0xCCCCCC)
+    gdi.TextOut(hdc, winX + 4, winY + 5, "Enter your credentials to log on.")
+
     local userCursor = (inputStage == "username") and "_" or ""
     local passCursor = (inputStage == "password") and "_" or ""
-    
     local maskedPassword = string.rep("*", #enteredPassword)
-    
-    gdi.TextOut(hdc, winX+4, winY+7, "User:     " .. currentUser .. userCursor .. "      ")
-    gdi.TextOut(hdc, winX+4, winY+9, "Password: " .. maskedPassword .. passCursor .. "      ")
-    
-    gdi.TextOut(hdc, winX+4, winY+11, "[Press Enter to confirm]")
+
+    gdi.TextOut(hdc, winX + 4, winY + 7, "User:     " .. currentUser .. userCursor .. "      ")
+    gdi.TextOut(hdc, winX + 4, winY + 9, "Password: " .. maskedPassword .. passCursor .. "      ")
+    gdi.TextOut(hdc, winX + 4, winY + 11, "[Press Enter to confirm]")
 end
 
 function winlogon.Main(args)
@@ -40,19 +93,30 @@ function winlogon.Main(args)
     csr = args.csr
     s32 = args.shell
     hdc = gdi.GetDC(0)
-    
+
     winW, winH = 60, 13
-    winX, winY = math.floor((HAL.w-winW)/2), math.floor((HAL.h-winH)/2)
-    
+    winX, winY = math.floor((HAL.w - winW) / 2), math.floor((HAL.h - winH) / 2)
+
+    t2ButtonX = 2
+    t2ButtonY = 2
+
     DbgPrint("WINLOGON: Switching to Winlogon desktop")
-    
+
+    if IsTier2ModeEnabled() then
+        _G.Tier2CM = true
+        DbgPrint("WINLOGON: Tier 2 Mode is ENABLED")
+    else
+        _G.Tier2CM = false
+        DbgPrint("WINLOGON: Tier 2 Mode is DISABLED")
+    end
+
     winlogon.RedrawLogonBox()
-    
+
     return winlogon
 end
 
 function winlogon.HandleKey(char, code)
-    if code == 28 then -- ENTER
+    if code == 28 then
         if inputStage == "username" then
             if currentUser ~= "" then
                 inputStage = "password"
@@ -61,11 +125,11 @@ function winlogon.HandleKey(char, code)
         elseif inputStage == "password" then
             local reg = _G.regedit0
             local samRoot = "SAM\\Users\\" .. currentUser
-            
+
             local correctPassword = reg.GetValueEx("HKEY_LOCAL_MACHINE\\SAM", samRoot, "Password")
             local userGroup = reg.GetValueEx("HKEY_LOCAL_MACHINE\\SAM", samRoot, "Group")
             local userHome = reg.GetValueEx("HKEY_LOCAL_MACHINE\\SAM", samRoot, "HomeDir")
-            
+
             if correctPassword and enteredPassword == correctPassword then
                 local userProfile = {
                     name = currentUser,
@@ -75,7 +139,7 @@ function winlogon.HandleKey(char, code)
                 return winlogon.AuthSuccess(userProfile)
             else
                 _G.DbgPrint("WINLOGON: Logon failed for user " .. currentUser)
-                
+
                 if csr and csr.CsrDisplayErrorBox then
                     csr.CsrDisplayErrorBox("winlogon.exe", "Logon Error: Invalid username or password.")
                     KeDelayExecutionThread(5)
@@ -85,7 +149,7 @@ function winlogon.HandleKey(char, code)
                 end
             end
         end
-        
+
     elseif code == 14 then
         if inputStage == "username" then
             currentUser = currentUser:sub(1, -2)
@@ -93,7 +157,7 @@ function winlogon.HandleKey(char, code)
             enteredPassword = enteredPassword:sub(1, -2)
         end
         winlogon.RedrawLogonBox()
-        
+
     elseif char >= 32 and char <= 126 then
         local keyChar = string.char(char)
         if inputStage == "username" then
@@ -103,26 +167,37 @@ function winlogon.HandleKey(char, code)
         end
         winlogon.RedrawLogonBox()
     end
-    
+
     return nil
+end
+
+function winlogon.HandleClick(x, y)
+    if x >= t2ButtonX and x <= t2ButtonX + t2ButtonW and
+       y >= t2ButtonY and y <= t2ButtonY + t2ButtonH then
+        DbgPrint("WINLOGON: Tier 2 Mode button clicked")
+        ToggleTier2Mode()
+        return true
+    end
+
+    return false
 end
 
 function winlogon.AuthSuccess(userProfile)
     DbgPrint("WINLOGON: Auth success, initializing Desktop for user: " .. userProfile.name)
-    
+
     _G.CurrentUserSession = userProfile
 
     if _G.RpcSs then
         local IScmInterface = {
             StartService = function(name) return _G.KRNL_SCM.StartService(name) end,
             StopService  = function(name) return _G.KRNL_SCM.StopService(name) end,
-            QueryStatus  = function(name) 
+            QueryStatus  = function(name)
                 if _G.KRNL_SCM.RunningServices[name] then
                     return true, _G.KRNL_SCM.RunningServices[name].pid
                 end
                 return false, nil
             end,
-            
+
             EnumRunningServices = function()
                 local list = {}
                 for svcName, _ in pairs(_G.KRNL_SCM.RunningServices) do
@@ -133,10 +208,10 @@ function winlogon.AuthSuccess(userProfile)
         }
         _G.RpcSs.RpcServerRegisterIf("IServiceControlManager", IScmInterface)
     end
-    
+
     local exp, err = _G.LdrLoadDll("/Windows/explorer.lua")
     if exp and exp.Desktop then
-        local s, err = pcall(function () exp.Desktop(gdi, HAL, s32, userProfile) end)
+        local s, err = pcall(function() exp.Desktop(gdi, HAL, s32, userProfile) end)
         if not s then
             csr.CsrDisplayErrorBox("explorer.exe", err)
         end
