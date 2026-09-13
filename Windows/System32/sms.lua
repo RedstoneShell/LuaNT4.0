@@ -31,6 +31,39 @@ local SMS = {
     InstallPath = nil
 }
 
+local function WrapText(text, maxWidth)
+    maxWidth = maxWidth or 42
+    text = tostring(text or "")
+    local lines = {}
+    local current = ""
+
+    for word in text:gmatch("%S+") do
+        if current == "" then
+            current = word
+        elseif #current + 1 + #word <= maxWidth then
+            current = current .. " " .. word
+        else
+            table.insert(lines, current)
+            current = word
+        end
+
+        while #current > maxWidth do
+            table.insert(lines, current:sub(1, maxWidth))
+            current = current:sub(maxWidth + 1)
+        end
+    end
+
+    if current ~= "" then
+        table.insert(lines, current)
+    end
+
+    if #lines == 0 then
+        lines = {""}
+    end
+
+    return lines
+end
+
 local function ParseConfig(content)
     local config = {}
     for line in content:gmatch("[^\r\n]+") do
@@ -241,16 +274,33 @@ local function DrawWindowFrame()
     else
         local config = SMS.CurrentPackage
         if config then
-            gdi32.TextOut(hdc, clientX + 2, clientY, "Name: " .. (config.name or "Unknown"))
-            gdi32.TextOut(hdc, clientX + 2, clientY + 1, "Version: " .. (config.ver or "Unknown"))
-            gdi32.TextOut(hdc, clientX + 2, clientY + 2, "Description: " .. (config.desc or "No description"))
-            gdi32.TextOut(hdc, clientX + 2, clientY + 3, "Files: " .. #(config.files or {}))
-            gdi32.TextOut(hdc, clientX + 2, clientY + 4, "Install Path: " .. (config.installPath or "Default"))
-            
+            local y = clientY
+            local maxW = clientW - 4
+
+            local function PutLine(label, value)
+                local text = label .. tostring(value)
+                local wrapped = WrapText(text, maxW)
+                for _, ln in ipairs(wrapped) do
+                    if y < clientY + clientH - 2 then
+                        gdi32.TextOut(hdc, clientX + 2, y, ln)
+                        y = y + 1
+                    end
+                end
+            end
+
+            PutLine("Name: ", config.name or "Unknown")
+            PutLine("Version: ", config.ver or "Unknown")
+            PutLine("Description: ", config.desc or "No description")
+            PutLine("Files: ", #(config.files or {}))
+            PutLine("Install Path: ", config.installPath or "Default")
+
+            y = y + 1
+
             gdi32.SetTextColor(hdc, 0x00AA00)
-            gdi32.TextOut(hdc, clientX + 2, clientY + 6, "[ENTER] - Install")
+            gdi32.TextOut(hdc, clientX + 2, y, "[ENTER] - Install")
+            y = y + 1
             gdi32.SetTextColor(hdc, COLORS.text)
-            gdi32.TextOut(hdc, clientX + 2, clientY + 7, "[<] - Back")
+            gdi32.TextOut(hdc, clientX + 2, y, "[<] - Back")
         end
     end
     
