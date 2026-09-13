@@ -10,9 +10,13 @@ local ntdll = _G.LdrLoadDll("Windows/System32/ntdll.lua")
 local args = {}
 if _G.RpcSs then
     local rpcOk, result = _G.RpcSs.RpcCliExecute("IConsoleManager", "GetProcessArgs")
-    if rpcOk and result then
+    if rpcOk and result and #result > 0 then
         args = result
     end
+end
+if #args == 0 and _G.LastSpawnedArgs then
+    args = _G.LastSpawnedArgs
+    _G.LastSpawnedArgs = nil
 end
 
 local function printToConsole(text)
@@ -33,7 +37,7 @@ local function ParseArguments(args)
     for i, arg in ipairs(args) do
         if arg == "/?" or arg == "-h" or arg == "--help" then
             showHelp = true
-        elseif arg:sub(1, 1) ~= "/" and arg:sub(1, 1) ~= "-" then
+        elseif arg:match("^%-") then
             fileToOpen = arg
         end
     end
@@ -934,7 +938,7 @@ local function HandleKey(char, code)
             elseif code == 205 then -- RIGHT
                 MoveCursor(1, 0)
                 return true
-            elseif code == 45 then -- INSERT
+            elseif code == 210 then -- INSERT
                 isInsertMode = not isInsertMode
                 RedrawWindow()
                 return true
