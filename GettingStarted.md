@@ -33,7 +33,7 @@ If you see this files in System32 ("**dhcpadmn.lua**", "**dhcpssvc.lua**"), you 
 If you hate infinity **UUID** Copy+Paste of Computers/Servers/Robots networks, to link it in one Network, we have DHCP. This is a protocol, that gives for you components unquie IP Address from IP Pool (See DHCP Admin), for every IP, server gives timeout, after that, this IP automaticaly releases for next connection.
 #### How to start:
   - WARNING!: Server and Client(s) need placed in any slot Network Card(or Wireless) for DHCP work and connection.
-  - At own PC/Server open Start menu (left-bottom button click) and click to **Run...**, in opened menu enter "**Windows/System32/dhcpssvc.lua**", press ENTER, and wait some time.
+  - At own PC/Server open Start menu (left-bottom button click) and click to **Run...**, in opened menu enter "**dhcpssvc.lua**", press ENTER, and wait some time.
   - Now your PC is a DHCP Server, he gives for DHCP_DISCOVER packets IP Addresses in responces.
   - For connect, and receive IP Address, recommended use OpenOS at device to connect, download this script "**pastebin get -f fPDbZZSb dhcp_client.lua**", and start, if you start DHCP Server, after some attempts he find Server and connect.
   - Now you can edit "**dhcp_client**", and add new packets to transmitting from DHCP Server at selected IP. And with your programs, use port 68 for receive packets (this packets make anything that you codded at his detection in **dhcp_client**)
@@ -42,7 +42,7 @@ If you hate infinity **UUID** Copy+Paste of Computers/Servers/Robots networks, t
 #### DHCP Administrator GUI
 Every DHCP Servers needs Control, for this we have "**dhcpadmn.lua**". WARNING!: Before start, check if you start DHCP Server, or Admin GUI start control nothing.
 #### How to start:
-  - At own PC/Server open Start menu (left-bottom button click, spam clicks, multitask some lag Desktop) and click to **Run...**, in opened menu enter "**Windows/System32/dhcpadmn.lua**", press ENTER, and wait some time.
+  - At own PC/Server open Start menu (left-bottom button click, spam clicks, multitask some lag Desktop) and click to **Run...**, in opened menu enter "**dhcpadmn.lua**", press ENTER, and wait some time.
   - After open this GUI, you can switch modes (Read: DHCP Administration Tutorial)
   - If you close Admin GUI, DHCP Server automaticaly stop. I don't have ideas how to stop DHCP Server.
 
@@ -71,4 +71,13 @@ Now, try itself at DHCP Admin, if you lost what to do, open this manual.
 Very good instrument for copying files in folders to other folders. In 4.0.1.3 update, "robocopy" integrated in System.
 Everything that you need to do at this scheme:
 ![RoboCopy](not_copyable/2026-09-11_22.40.48.png)
+
+## About "Run..."
+Interesting fact! You can enter just, for example "**dhcpadmn.lua**" and this automaticaly start **Windows/System32/dhcpadmn.lua**
+
+This works only if program in this paths:
+  - Windows/
+  - Windows/System32
+  - Program Files/
+
 ### END
