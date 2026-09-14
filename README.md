@@ -1,5 +1,5 @@
 # LuaNT 4.0, A greatest project in OpenComputers (MC 1.12.2) mod, FROM 01.07.2026 integrated with OpenPrinter
-![Desktop](not_copyable/2026-06-25_23.24.42.png)
+![Desktop](not_copyable/2026-09-14_14.43.17.png)
 A Operating System with simple GUI, Launches at minimum 1x 384KB RAM (Tier 2) free 1KB in max usage; for normal use minimum x2 384KB RAM (Tier 2), gets 768KB, free in maximum 266KB.
 Have a Winlogon, drivers, services, Registry, multi-task, Plug-and-Play, WinUpdate (custom system), notepad, Device Manager, Task Manager and Console. From 26.06.2026 we have basic RSA Base with: DES, 3DES, RC2, RC4, MD2, MD4, MD5. 
 
