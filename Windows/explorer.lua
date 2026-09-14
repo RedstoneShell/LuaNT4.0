@@ -1174,6 +1174,8 @@ function explorer.RunDialog(gdi, gpu, s32)
 
             if code == 28 then  -- ENTER
                 if #input > 0 then
+                    gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x008080))
+                    gdi.PatBlt(hdc, x, y, w, h, gdi.PATCOPY)
                     local fs = component.proxy(computer.getBootAddress())
                     local path = input
 
