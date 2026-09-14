@@ -487,6 +487,14 @@ local function CreateInstance()
     return instance
 end
 
+function esent.SetCatalog(catalog)
+    if not g_instance then
+        return false, "Instance not initialized"
+    end
+    g_instance.catalog = catalog
+    return true
+end
+
 -- ============================================================
 -- Session helpers
 -- ============================================================
