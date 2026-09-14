@@ -1,14 +1,9 @@
--- ESEDBView.lua - ESENT Database Viewer для LuaNT
--- (C) RedstoneShell 2026
--- Перегляд структури .mdb (сторінки, теги, записи)
-
 local gdi32 = _G.KRNL_GDI32 or _G.LdrLoadDll("Windows/System32/gdi32.lua")
 local ntdll = _G.LdrLoadDll("Windows/System32/ntdll.lua")
 
 local hdc = gdi32.GetDC(0)
 local screenW, screenH = _G.HAL.w, _G.HAL.h
 
--- ===== Константи =====
 local PAGE_SIZE      = 4096
 local MAX_PAGES      = 64
 local PAGE_HEADER    = 40
@@ -16,17 +11,14 @@ local TAG_SIZE       = 8
 local FORMAT_MAGIC   = "LJTB"
 local FORMAT_VERSION = 1
 
--- ===== Читання файлу =====
 local function ReadFile(fs, path)
     if not fs.exists(path) then
         return nil, "File not found: " .. path
     end
-
     local file = fs.open(path, "rb")
     if not file then
         return nil, "Cannot open file"
     end
-
     local chunks = {}
     while true do
         local chunk = fs.read(file, 8192)
@@ -34,11 +26,9 @@ local function ReadFile(fs, path)
         chunks[#chunks + 1] = chunk
     end
     fs.close(file)
-
     return table.concat(chunks)
 end
 
--- ===== ReadUInt32 =====
 local function ReadUInt32(buf, pos)
     local b1 = string.byte(buf, pos) or 0
     local b2 = string.byte(buf, pos + 1) or 0
@@ -47,7 +37,6 @@ local function ReadUInt32(buf, pos)
     return b1 + b2 * 256 + b3 * 65536 + b4 * 16777216
 end
 
--- ===== Парсинг сторінки =====
 local function ParsePage(buf, pageNo)
     local page = {
         pageNumber = pageNo,
@@ -61,11 +50,9 @@ local function ParsePage(buf, pageNo)
         records    = {},
         valid      = false
     }
-
     if #buf < PAGE_HEADER then
         return page
     end
-
     if page.magic == FORMAT_MAGIC then
         page.version    = ReadUInt32(buf, 5)
         page.pageNumber = ReadUInt32(buf, 9)
@@ -84,36 +71,26 @@ local function ParsePage(buf, pageNo)
         page.firstTag   = 21
         page.valid      = true
     end
-
     if page.tagCount > 0 and page.tagCount <= 64 then
         for i = 1, page.tagCount do
             local p = page.firstTag + (i - 1) * TAG_SIZE
             local offset = ReadUInt32(buf, p)
             local length = ReadUInt32(buf, p + 4)
-
-            table.insert(page.tags, {
-                index = i,
-                offset = offset,
-                length = length
-            })
-
+            table.insert(page.tags, { index = i, offset = offset, length = length })
             if offset > 0 and length > 0 and offset + length <= #buf then
                 local record = buf:sub(offset + 1, offset + length)
                 table.insert(page.records, record)
             end
         end
     end
-
     return page
 end
 
--- ===== Парсинг всього файлу =====
 local function ParseDatabase(fs, path)
     local buf, err = ReadFile(fs, path)
     if not buf then
         return nil, err
     end
-
     local db = {
         path      = path,
         size      = #buf,
@@ -121,38 +98,67 @@ local function ParseDatabase(fs, path)
         pages     = {},
         valid     = true
     }
-
     for i = 0, math.min(db.pageCount - 1, MAX_PAGES - 1) do
         local offset = i * PAGE_SIZE + 1
         local pageBuf = buf:sub(offset, offset + PAGE_SIZE - 1)
-
         if #pageBuf > 0 then
             db.pages[i] = ParsePage(pageBuf, i)
         end
     end
-
     return db
 end
 
--- ===== Список .mdb файлів у папці =====
-local function ListMDBFiles(fs, dir)
-    local files = {}
+local function IsDBFile(name)
+    return name:match("%.mdb$") or name:match("%.dat$")
+end
 
-    if not fs.exists(dir) then
-        return files
-    end
+local function ScanDirRecursive(fs, dir, results, depth)
+    depth = depth or 0
+    if depth > 8 then return end
+    if not fs.exists(dir) then return end
 
-    local items = fs.list(dir)
+    local ok, items = pcall(fs.list, dir)
+    if not ok or not items then return end
+
     for _, item in ipairs(items) do
-        if item:match("%.mdb$") then
-            table.insert(files, dir .. item)
+        local full = dir
+        if full:sub(-1) ~= "/" then full = full .. "/" end
+        full = full .. item
+
+        local isDir = false
+        pcall(function()
+            local f = fs.open(full, "rb")
+            if not f then isDir = true end
+            if f then fs.close(f) end
+        end)
+
+        if isDir then
+            ScanDirRecursive(fs, full, results, depth + 1)
+        elseif IsDBFile(item) then
+            results[#results + 1] = full
+        end
+    end
+end
+
+local function ScanAllDBFiles(fs)
+    local results = {}
+    local roots = { "/", "Windows/", "Windows/System32/", "Windows/System32/dhcp/" }
+    local seen = {}
+
+    for _, root in ipairs(roots) do
+        local found = {}
+        ScanDirRecursive(fs, root, found, 0)
+        for _, f in ipairs(found) do
+            if not seen[f] then
+                seen[f] = true
+                results[#results + 1] = f
+            end
         end
     end
 
-    return files
+    return results
 end
 
--- ===== GUI =====
 local function RunViewer()
     local winW = math.min(76, screenW - 2)
     local winH = math.min(24, screenH - 2)
@@ -172,23 +178,16 @@ local function RunViewer()
     local currentPage = 0
     local scrollOffset = 0
     local statusText = "No file opened"
-
-    -- Режим: 1 = Pages, 2 = Records, 3 = File Picker
     local mode = 1
-
-    -- File picker
     local mdbFiles = {}
     local pickerIndex = 1
 
-    -- ===== Завантаження =====
     local function LoadDB(path)
         statusText = "Loading " .. path .. "..."
         dbPath = path
         db, err = ParseDatabase(fs, path)
-
         if db then
-            statusText = string.format("Loaded %s (%d pages, %d bytes)",
-                path, db.pageCount, db.size)
+            statusText = string.format("Loaded %s (%d pages, %d bytes)", path, db.pageCount, db.size)
             currentPage = 0
             scrollOffset = 0
         else
@@ -196,41 +195,18 @@ local function RunViewer()
         end
     end
 
-    -- ===== Сканування .mdb =====
     local function ScanMDB()
-        mdbFiles = {}
-        local searchDirs = {
-            "Windows/System32/dhcp/",
-            "Windows/System32/",
-            "Windows/",
-            "/",
-        }
-
-        for _, dir in ipairs(searchDirs) do
-            local files = ListMDBFiles(fs, dir)
-            for _, f in ipairs(files) do
-                -- Уникаємо дублікатів
-                local exists = false
-                for _, existing in ipairs(mdbFiles) do
-                    if existing == f then exists = true break end
-                end
-                if not exists then
-                    table.insert(mdbFiles, f)
-                end
-            end
-        end
-
+        statusText = "Scanning disk for .mdb/.dat files..."
+        mdbFiles = ScanAllDBFiles(fs)
         pickerIndex = 1
-        DbgPrint("ESEDBVIEW: Found " .. #mdbFiles .. " .mdb files")
+        statusText = "Found " .. #mdbFiles .. " database file(s)"
+        DbgPrint("ESEDBVIEW: Found " .. #mdbFiles .. " .mdb/.dat files")
     end
 
-    -- ===== Малювання =====
     local function DrawWindow()
-        -- Фон вікна
         gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(0xC0C0C0))
         gdi32.PatBlt(hdc, winX, winY, winW, winH, gdi32.PATCOPY)
 
-        -- 3D-рамка
         gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(0xFFFFFF))
         gdi32.PatBlt(hdc, winX, winY, winW, 1, gdi32.PATCOPY)
         gdi32.PatBlt(hdc, winX, winY, 1, winH, gdi32.PATCOPY)
@@ -238,7 +214,6 @@ local function RunViewer()
         gdi32.PatBlt(hdc, winX, winY + winH - 1, winW, 1, gdi32.PATCOPY)
         gdi32.PatBlt(hdc, winX + winW - 1, winY, 1, winH, gdi32.PATCOPY)
 
-        -- Заголовок
         gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(0x000080))
         gdi32.PatBlt(hdc, winX + 1, winY + 1, winW - 2, 1, gdi32.PATCOPY)
         gdi32.SetTextColor(hdc, 0xFFFFFF)
@@ -255,7 +230,6 @@ local function RunViewer()
         gdi32.SetTextColor(hdc, 0xFF0000)
         gdi32.TextOut(hdc, winX + winW - 4, winY + 1, "[X]")
 
-        -- Клієнтська область
         gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(0x000000))
         gdi32.PatBlt(hdc, clientX, clientY, clientW, clientH, gdi32.PATCOPY)
 
@@ -271,38 +245,30 @@ local function RunViewer()
             line = line + 1
         end
 
-        -- ===== File Picker =====
         if mode == 3 then
-            WriteLine("=== Open .mdb File ===")
+            WriteLine("=== Open Database File ===")
             WriteLine("")
-
             if #mdbFiles == 0 then
-                WriteLine("  No .mdb files found")
+                WriteLine("  No .mdb/.dat files found on disk")
                 WriteLine("")
-                WriteLine("  Searched in:")
-                WriteLine("    Windows/System32/dhcp/")
-                WriteLine("    Windows/System32/")
-                WriteLine("    Windows/")
+                WriteLine("  Scanned: /, Windows/, System32/, dhcp/")
             else
                 WriteLine("  Found " .. #mdbFiles .. " file(s):")
                 WriteLine("")
-
                 for i, f in ipairs(mdbFiles) do
                     local prefix = (i == pickerIndex) and "> " or "  "
                     WriteLine(prefix .. f)
                 end
             end
-
             WriteLine("")
-            WriteLine("  [ENTER] Open  [ESC] Cancel  [R] Refresh")
+            WriteLine("  [ENTER] Open  [ESC] Cancel  [R] Rescan")
 
-        -- ===== Pages Mode =====
         elseif mode == 1 then
             if not db then
                 WriteLine("")
                 WriteLine("  No file opened.")
                 WriteLine("")
-                WriteLine("  Press [O] to open a .mdb file")
+                WriteLine("  Press [O] to open a database file")
             else
                 WriteLine("=== ESENT Database Viewer ===")
                 WriteLine("")
@@ -333,7 +299,6 @@ local function RunViewer()
                     if p then
                         local validMark = p.valid and "OK " or "BAD"
                         local recordCount = #p.records
-
                         local prefix = (i == currentPage) and ">" or " "
                         WriteLine(string.format("%s%4d  %4d  %4d  %5d  %s   %d",
                             prefix, i, p.treeId, p.tagCount, p.freeSpace, validMark, recordCount))
@@ -341,7 +306,6 @@ local function RunViewer()
                 end
             end
 
-        -- ===== Records Mode =====
         elseif mode == 2 then
             if not db then
                 WriteLine("")
@@ -361,13 +325,10 @@ local function RunViewer()
                     else
                         for ri, rec in ipairs(curPage.records) do
                             WriteLine("--- Record " .. ri .. " ---")
-
-                            -- Розбиваємо запис на поля
                             local fields = {}
                             for pair in rec:gmatch("[^;]+") do
                                 table.insert(fields, pair)
                             end
-
                             for _, field in ipairs(fields) do
                                 WriteLine("  " .. field)
                             end
@@ -378,7 +339,6 @@ local function RunViewer()
             end
         end
 
-        -- Статус-бар
         gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(0xC0C0C0))
         gdi32.PatBlt(hdc, winX + 1, winY + winH - 2, winW - 2, 1, gdi32.PATCOPY)
         gdi32.SetTextColor(hdc, 0x000000)
@@ -392,76 +352,66 @@ local function RunViewer()
         elseif mode == 3 then
             statusLine = "Select file: " .. pickerIndex .. "/" .. #mdbFiles
         end
-
         gdi32.TextOut(hdc, winX + 2, winY + winH - 2, statusLine:sub(1, winW - 4))
     end
 
-    -- ===== Обробка клавіш =====
     local function HandleKey(char, code)
-        -- ===== File Picker =====
         if mode == 3 then
-            if code == 200 then  -- UP
+            if code == 200 then
                 if pickerIndex > 1 then pickerIndex = pickerIndex - 1 end
-            elseif code == 208 then  -- DOWN
+            elseif code == 208 then
                 if pickerIndex < #mdbFiles then pickerIndex = pickerIndex + 1 end
-            elseif code == 28 then  -- ENTER
+            elseif code == 28 then
                 if mdbFiles[pickerIndex] then
                     LoadDB(mdbFiles[pickerIndex])
                     mode = 1
                 end
-            elseif char == 114 or char == 82 then  -- R
+            elseif char == 114 or char == 82 then
                 ScanMDB()
             end
             return
         end
 
-        -- ===== No DB =====
         if not db then
-            if char == 111 or char == 79 then  -- O
+            if char == 111 or char == 79 then
                 ScanMDB()
                 mode = 3
             end
             return
         end
 
-        -- ===== Pages / Records =====
-        if code == 200 then  -- UP
-            if scrollOffset > 0 then
-                scrollOffset = scrollOffset - 1
-            end
-        elseif code == 208 then  -- DOWN
-            if scrollOffset < 200 then
-                scrollOffset = scrollOffset + 1
-            end
-        elseif code == 203 then  -- LEFT
+        if code == 200 then
+            if scrollOffset > 0 then scrollOffset = scrollOffset - 1 end
+        elseif code == 208 then
+            if scrollOffset < 200 then scrollOffset = scrollOffset + 1 end
+        elseif code == 203 then
             if currentPage > 0 then
                 currentPage = currentPage - 1
                 scrollOffset = 0
             end
-        elseif code == 205 then  -- RIGHT
+        elseif code == 205 then
             if currentPage < db.pageCount - 1 then
                 currentPage = currentPage + 1
                 scrollOffset = 0
             end
-        elseif code == 201 then  -- PAGE UP
+        elseif code == 201 then
             scrollOffset = math.max(0, scrollOffset - 10)
-        elseif code == 209 then  -- PAGE DOWN
+        elseif code == 209 then
             scrollOffset = scrollOffset + 10
-        elseif code == 199 then  -- HOME
+        elseif code == 199 then
             scrollOffset = 0
-        elseif code == 207 then  -- END
+        elseif code == 207 then
             scrollOffset = 200
-        elseif code == 15 then  -- TAB
+        elseif code == 15 then
             if mode == 1 then mode = 2
             elseif mode == 2 then mode = 1 end
             scrollOffset = 0
-        elseif char == 111 or char == 79 then  -- O
+        elseif char == 111 or char == 79 then
             ScanMDB()
             mode = 3
         end
     end
 
-    -- ===== Запуск =====
     ScanMDB()
     DrawWindow()
     coroutine.yield()
@@ -473,7 +423,7 @@ local function RunViewer()
         if event == "key_down" then
             local char, code = signal[3], signal[4]
 
-            if code == 1 then  -- ESC
+            if code == 1 then
                 if mode == 3 then
                     mode = 1
                 else
@@ -481,25 +431,20 @@ local function RunViewer()
                     gdi32.PatBlt(hdc, winX, winY, winW, winH, gdi32.PATCOPY)
                     return
                 end
-
-            elseif code == 116 then  -- F5
+            elseif code == 116 then
                 if dbPath then LoadDB(dbPath) end
-
             else
                 HandleKey(char, code)
             end
-
             DrawWindow()
 
         elseif event == "touch" then
             local tx, ty = signal[3], signal[4]
-
             if ty == winY + 1 and tx >= winX + winW - 5 then
                 gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(0x008080))
                 gdi32.PatBlt(hdc, winX, winY, winW, winH, gdi32.PATCOPY)
                 return
             end
-
             DrawWindow()
         end
     end
