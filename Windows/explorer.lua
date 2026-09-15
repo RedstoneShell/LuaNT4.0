@@ -23,7 +23,6 @@ function explorer.Desktop(gdi, gpu, s32, profile)
 
     local hdc = gdi.GetDC(0)
 
-    -- Фон
     local hDeskB = gdi.CreateSolidBrush(0x008080)
     gdi.SelectObject(hdc, hDeskB)
     gdi.PatBlt(hdc, 0, 0, gpu.w, gpu.h, gdi.PATCOPY)
@@ -728,6 +727,7 @@ function explorer.Props()
         explorer.openedMenu={}
         local fsAddr=_G.Mm.NonPagedPool[_G.Drives[selDsk]].address
         local fs    = component.proxy(fsAddr)
+        if _G.Mm.NonPagedPool[_G.Drives[selDsk]]._isNetwork then fs=_G.Mm.NonPagedPool[_G.Drives[selDsk]] end
         local total, used, label = fs.spaceTotal(), fs.spaceUsed(), fs.getLabel() or "Unnamed"
         local free, hdc = total-used, explorer.gdi32.GetDC(0)
         explorer.gdi32.SelectObject(hdc, explorer.gdi32.CreateSolidBrush(0xCCCCCC))
@@ -754,6 +754,7 @@ function explorer.FileWindow()
     explorer.openedMenu={}
     local fsAddr=_G.Mm.NonPagedPool[_G.Drives[selDsk]].address
     local fs    = component.proxy(fsAddr)
+    if _G.Mm.NonPagedPool[_G.Drives[selDsk]]._isNetwork then fs=_G.Mm.NonPagedPool[_G.Drives[selDsk]] end
     local hdc   = explorer.gdi32.GetDC(0)
     if exit_fm then explorer.gdi32.SelectObject(hdc, explorer.gdi32.CreateSolidBrush(0x008080)) explorer.gdi32.PatBlt(hdc, 15, 4, 50, 36, explorer.gdi32.PATCOPY) explorer.OpenMyPc(explorer.gdi32, explorer.gpu, explorer.s32) openCoverMenu=false exit_fm=false return end
     explorer.gdi32.SelectObject(hdc, explorer.gdi32.CreateSolidBrush(0xFAFAFA))
