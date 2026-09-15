@@ -209,8 +209,6 @@ if not HAL.gpu then
     error("No GPU found! System halted.")
 end
 
-wait(2)
-
 local function wait(s)
     local start = computer.uptime()
     local duration = s
@@ -607,8 +605,7 @@ end
 ApplyWinSxSUpdates()
 pc_io.remove("Windows/WinSxS")
 
-DbgPrint("Loading 'ntoskrnl', waiting 3 seconds for initializing OpenComputers hardware...")
-wait(3)
+DbgPrint("Loading 'ntoskrnl'...")
 local krnl_file="Windows/System32/ntoskrnl.lua"
 local krnl_func, load_err = NtOpenFile(krnl_file)
 
