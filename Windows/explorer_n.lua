@@ -338,8 +338,6 @@ local function DrawWindowFrame()
             local isSelected = (idx == selectedIndex)
 
             if isSelected then
-                gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(COLORS.selected))
-                gdi32.PatBlt(hdc, clientX, yPos, clientW, 1, gdi32.PATCOPY)
                 gdi32.SetTextColor(hdc, COLORS.selected_text)
             else
                 gdi32.SetTextColor(hdc, item.isDir and COLORS.folder or COLORS.file)
@@ -350,7 +348,7 @@ local function DrawWindowFrame()
             if #displayName > clientW - 10 then
                 displayName = displayName:sub(1, clientW - 13) .. "..."
             end
-            gdi32.TextOut(hdc, clientX + 2, yPos, prefix .. displayName)
+            gdi32.TextOut(hdc, clientX + 2, yPos, prefix .. displayName, 0xC0C0C0)
         end
     end
 

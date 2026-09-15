@@ -78,7 +78,7 @@ function explorer.Desktop(gdi, gpu, s32, profile)
             gdi.SetBkColor(hdc, 0xC0C0C0)
 
             for _, item in ipairs(menuItems) do
-                gdi.TextOut(hdc, mX + 3, mY + item[2], item[1]:sub(1, mW - 4))
+                gdi.TextOut(hdc, mX + 3, mY + item[2], item[1]:sub(1, mW - 4), 0xA0A0A0)
             end
 
             if LDM then
@@ -366,12 +366,12 @@ function explorer.OpenSetupMgr(gdi, gpu, s32)
         
         gdi.SetTextColor(hdc, 0x000000)
         gdi.SetBkMode(hdc, gdi.TRANSPARENT)
-        gdi.TextOut(hdc, x + 3, y + 3, "Select Floppy Drive for Installation:")
-        gdi.TextOut(hdc, x + 3, y + 4, "Use ^v to select, ENTER to start copying.")
+        gdi.TextOut(hdc, x + 3, y + 3, "Select Floppy Drive for Installation:", 0xC0C0C0)
+        gdi.TextOut(hdc, x + 3, y + 4, "Use ^v to select, ENTER to start copying.", 0xC0C0C0)
         
         if #drives == 0 then
             gdi.SetTextColor(hdc, 0xFF0000)
-            gdi.TextOut(hdc, x + 5, y + 6, "[ No floppy drives detected! ]")
+            gdi.TextOut(hdc, x + 5, y + 6, "[ No floppy drives detected! ]", 0xC0C0C0)
         else
             for i, drv in ipairs(drives) do
                 local yPos = y + 5 + i
@@ -379,20 +379,18 @@ function explorer.OpenSetupMgr(gdi, gpu, s32)
                 local statusText = hasMedia and string.format("Floppy %d: [ Ready ]", i-1) or string.format("Floppy %d: [ Empty ]", i-1)
                 
                 if i == activeSel then
-                    gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
-                    gdi.PatBlt(hdc, x + 4, yPos, w - 8, 1, gdi.PATCOPY)
                     gdi.SetTextColor(hdc, 0xFFFFFF)
                 else
                     gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xCCCCCC))
                     gdi.SetTextColor(hdc, 0x000000)
                 end
-                gdi.TextOut(hdc, x + 5, yPos, statusText .. " (" .. drv.address:sub(1,6) .. ")")
+                gdi.TextOut(hdc, x + 5, yPos, statusText .. " (" .. drv.address:sub(1,6) .. ")", 0xC0C0C0)
             end
         end
         
         gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xCCCCCC))
         gdi.SetTextColor(hdc, 0x555555)
-        gdi.TextOut(hdc, x + 3, y + h - 2, "Delete: Abort and close Setup Manager")
+        gdi.TextOut(hdc, x + 3, y + h - 2, "Delete: Abort and close Setup Manager", 0xC0C0C0)
     end
 
     local function copySystemToFloppy(targetFsProxy)
@@ -453,7 +451,7 @@ function explorer.OpenSetupMgr(gdi, gpu, s32)
                 if selectedDrive.isEmpty() then
                     computer.beep(440, 0.3)
                     gdi.SetTextColor(hdc, 0xFF0000)
-                    gdi.TextOut(hdc, x + 5, y + h - 4, "Error: Insert floppy disk first!   ")
+                    gdi.TextOut(hdc, x + 5, y + h - 4, "Error: Insert floppy disk first!   ", 0xC0C0C0)
                     KeDelayExecutionThread(1.5)
                     redrawMgr()
                 else
@@ -790,8 +788,8 @@ function explorer.UpdateTime(PTIME_FIELDS)
     local timeStr=string.format("%02d:%02d", PTIME_FIELDS.Hour, PTIME_FIELDS.Minute)
     local dateStr=string.format("%02d.%02d.%04d", PTIME_FIELDS.Day, PTIME_FIELDS.Month, PTIME_FIELDS.Year)
     explorer.gdi32.SetTextColor(0x666666)
-    explorer.gdi32.TextOut(hdc, explorer.screen.width-9, explorer.screen.height-3, timeStr)
-    explorer.gdi32.TextOut(hdc, explorer.screen.width-11, explorer.screen.height-2, dateStr)
+    explorer.gdi32.TextOut(hdc, explorer.screen.width-9, explorer.screen.height-3, timeStr, 0xC0C0C0)
+    explorer.gdi32.TextOut(hdc, explorer.screen.width-11, explorer.screen.height-2, dateStr, 0xC0C0C0)
 end
 
 function explorer.OpenWinNTSetup(gdi, gpu, s32)
@@ -1064,7 +1062,7 @@ function explorer.OpenMyPc(gdi, gpu, s32)
                         s32.DrawIcon(hdc, gdi, 0xAABBCC, iconX, yOff, "Floppy", l)
                         gdi.SetTextColor(hdc, 0x000000)
                         gdi.SetBkColor(hdc, 0xFAFAFA)
-                        gdi.TextOut(hdc, iconTextX, yOff + 1, fullLabel)
+                        gdi.TextOut(hdc, iconTextX, yOff + 1, fullLabel, 0xC0C0C0)
                         yOff = yOff + yStep
                         hddc = hddc + 1
                     end
@@ -1076,7 +1074,7 @@ function explorer.OpenMyPc(gdi, gpu, s32)
                         s32.DrawIcon(hdc, gdi, 0xAABBCC, iconX, yOff, "Drive", l)
                         gdi.SetTextColor(hdc, 0x000000)
                         gdi.SetBkColor(hdc, 0xFAFAFA)
-                        gdi.TextOut(hdc, iconTextX, yOff + 1, fullLabel)
+                        gdi.TextOut(hdc, iconTextX, yOff + 1, fullLabel, 0xC0C0C0)
                         yOff = yOff + yStep
                         hddc = hddc + 1
                     else
@@ -1087,7 +1085,7 @@ function explorer.OpenMyPc(gdi, gpu, s32)
                         s32.DrawIcon(hdc, gdi, 0xAABBCC, iconX, yOff, "Drive_Error", l)
                         gdi.SetTextColor(hdc, 0xFF0000)
                         gdi.SetBkColor(hdc, 0xFAFAFA)
-                        gdi.TextOut(hdc, iconTextX, yOff + 1, fullLabel)
+                        gdi.TextOut(hdc, iconTextX, yOff + 1, fullLabel, 0xC0C0C0)
                         yOff = yOff + yStep
                         hddc = hddc + 1
                     end
@@ -1099,9 +1097,9 @@ function explorer.OpenMyPc(gdi, gpu, s32)
     gdi.SetTextColor(hdc, 0x113399)
     gdi.SetBkColor(hdc, 0xFAFAFA)
     if LDM then
-        gdi.TextOut(hdc, winX + 2, winY + 2, "Hard disk drives (" .. hddc .. ")")
+        gdi.TextOut(hdc, winX + 2, winY + 2, "Hard disk drives (" .. hddc .. ")", 0xC0C0C0)
     else
-        gdi.TextOut(hdc, winX + 5, winY + 5, "Hard disk drives (" .. hddc .. ")")
+        gdi.TextOut(hdc, winX + 5, winY + 5, "Hard disk drives (" .. hddc .. ")", 0xC0C0C0)
     end
     s32.RegisterIcon("Drive", iconX, diskOffs, 8, 4, function(args)
         if args[1] == "MENU" and not openCoverMenu then
@@ -1154,8 +1152,8 @@ function explorer.RunDialog(gdi, gpu, s32)
 
         gdi.SetTextColor(hdc, 0xFFFFFF)
         gdi.SetBkColor(hdc, 0xC0C0C0)
-        gdi.TextOut(hdc, x + 2, y + 3, "Type the name of a program, and")
-        gdi.TextOut(hdc, x + 2, y + 4, "LuaNT will open it for you.")
+        gdi.TextOut(hdc, x + 2, y + 3, "Type the name of a program, and", 0xC0C0C0)
+        gdi.TextOut(hdc, x + 2, y + 4, "LuaNT will open it for you.", 0xC0C0C0)
 
         gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xFFFFFF))
         gdi.PatBlt(hdc, x + 2, y + 5, w - 4, 1, gdi.PATCOPY)
@@ -1218,6 +1216,8 @@ function explorer.RunDialog(gdi, gpu, s32)
                         end
                     end
                 end
+                gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x008080))
+                gdi.PatBlt(hdc, x, y, w, h, gdi.PATCOPY)
                 return
 
             elseif code == 203 then  -- <
@@ -1305,28 +1305,26 @@ function explorer.ColorSetup(gdi, gpu, s32)
         gdi.SetTextColor(hdc, 0xFFFFFF)
         gdi.SetBkColor(hdc, 0x808080)
         gdi.SetBkMode(1)
-        gdi.TextOut(hdc, x + 2, y + 3, "Select color depth for this display:")
-        gdi.TextOut(hdc, x + 2, y + 4, "──────────────────────────────────")
+        gdi.TextOut(hdc, x + 2, y + 3, "Select color depth for this display:", 0xC0C0C0)
+        gdi.TextOut(hdc, x + 2, y + 4, "──────────────────────────────────", 0xC0C0C0)
 
         for i, mode in ipairs(modes) do
             local lineY = y + 4 + i
             local marker = (i == selected) and "> " or "  "
 
             if i == selected then
-                gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x000080))
-                gdi.PatBlt(hdc, x + 2, lineY, w - 4, 1, gdi.PATCOPY)
                 gdi.SetTextColor(hdc, 0x00FF00)
             else
                 gdi.SetTextColor(hdc, 0xFFFFFF)
             end
 
             gdi.TextOut(hdc, x + 3, lineY,
-                marker .. mode.name .. " - " .. mode.desc)
+                marker .. mode.name .. " - " .. mode.desc, 0xC0C0C0)
         end
 
         gdi.SetTextColor(hdc, 0xFFFFFF)
         gdi.SetBkColor(hdc, 0xC0C0C0)
-        gdi.TextOut(hdc, x + 2, y + h - 4, "Status: " .. statusText:sub(1, w - 10))
+        gdi.TextOut(hdc, x + 2, y + h - 4, "Status: " .. statusText:sub(1, w - 10), 0xC0C0C0)
 
         local btnY = y + h - 2
         gdi.SelectObject(hdc, gdi.CreateSolidBrush(0xE0E0E0))
@@ -1413,6 +1411,8 @@ function explorer.ColorSetup(gdi, gpu, s32)
                 DrawDialog()
 
             elseif ty == btnY and tx >= x + w - 11 and tx < x + w - 2 then
+                gdi.SelectObject(hdc, gdi.CreateSolidBrush(0x008080))
+                gdi.PatBlt(hdc, x, y, w, h, gdi.PATCOPY)
                 return
             end
 
@@ -1514,10 +1514,10 @@ function explorer.ShowSystemProperties(gdi, gpu, s32)
             if line[1] ~= "" then
                 gdi.SetTextColor(hdc, 0xFFFFFF)
                 gdi.SetBkColor(hdc, 0xC0C0C0)
-                gdi.TextOut(hdc, clientX + 2, lineY, line[1])
+                gdi.TextOut(hdc, clientX + 2, lineY, line[1], 0xC0C0C0)
 
                 gdi.SetTextColor(hdc, line[3])
-                gdi.TextOut(hdc, clientX + 22, lineY, line[2]:sub(1, clientW - 24))
+                gdi.TextOut(hdc, clientX + 22, lineY, line[2]:sub(1, clientW - 24), 0xC0C0C0)
             end
             lineY = lineY + 1
         end
@@ -1527,7 +1527,7 @@ function explorer.ShowSystemProperties(gdi, gpu, s32)
         gdi.PatBlt(hdc, winX + winW - 12, btnY, 10, 2, gdi.PATCOPY)
         gdi.SetTextColor(hdc, 0x000000)
         gdi.SetBkColor(hdc, 0xE0E0E0)
-        gdi.TextOut(hdc, winX + winW - 11, btnY, "[  OK  ]")
+        gdi.TextOut(hdc, winX + winW - 11, btnY, "[  OK  ]", 0xC0C0C0)
     end
 
     DrawWindow()
