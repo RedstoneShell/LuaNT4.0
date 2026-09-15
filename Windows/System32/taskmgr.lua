@@ -65,18 +65,15 @@ local function DrawTaskMgr()
         for idx, thread in ipairs(plist) do
             if idx <= clientH - 5 then
                 if idx == selectedIndex then
-                gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(0x00A8A8))
-                gdi32.PatBlt(hdc, clientX + 1, clientY + 1 + idx, clientW - 2, 1, gdi32.PATCOPY)
-                
-                gdi32.SetTextColor(hdc, 0x000000)
-                gdi32.SetBkColor(hdc, 0x00A8A8)
-            else
-                gdi32.SetTextColor(hdc, 0xFFFFFF)
-                gdi32.SetBkColor(hdc, 0x000000)
-            end
+                    gdi32.SetTextColor(hdc, 0xFFFF00)
+                    gdi32.SetBkColor(hdc, 0x00A8A8)
+                else
+                    gdi32.SetTextColor(hdc, 0xFFFFFF)
+                    gdi32.SetBkColor(hdc, 0x000000)
+                end
                             
                 local line = string.format("%-4d %-15s %-4d", thread.UniqueProcessId, thread.ImageName:sub(1, 15), thread.CurrentPriority)
-                gdi32.TextOut(hdc, clientX + 1, clientY + 1 + idx, line)
+                gdi32.TextOut(hdc, clientX + 1, clientY + 1 + idx, line, 0x000000)
             end
         end
 

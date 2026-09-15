@@ -208,8 +208,6 @@ local function DrawUserList()
         local isSelected = (i == selectedIndex)
         
         if isSelected then
-            gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(COLORS.selected))
-            gdi32.PatBlt(hdc, clientX, yPos, clientW, 1, gdi32.PATCOPY)
             gdi32.SetTextColor(hdc, COLORS.selected_text)
         else
             if user.group == "Administrators" then
@@ -227,13 +225,13 @@ local function DrawUserList()
         local ridStr = (user.rid or "0"):sub(1, 6)
         
         gdi32.TextOut(hdc, clientX + 3, yPos, 
-            string.format("%-20s %-14s %s", nameStr, groupStr, ridStr))
+            string.format("%-20s %-14s %s", nameStr, groupStr, ridStr), 0xAAAAAA)
     end
     
     gdi32.SetTextColor(hdc, 0x888888)
     gdi32.SetBkColor(hdc, COLORS.client_bg)
-    gdi32.TextOut(hdc, clientX + 2, clientY + clientH - 1, 
-        "↑↓ Select  ENTER: Edit  INS: New  DEL: Delete  <: Exit")
+    gdi32.TextOut(hdc, clientX, clientY + clientH - 1, 
+        "↑↓ Select  ENTER: Edit  INS: New  DEL: Delete  <: Exit", 0xFFFFFF)
 end
 
 local function DrawEditForm()

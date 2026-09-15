@@ -84,7 +84,7 @@ local COLORS = {
     client_bg = 0xFFFFFF,
     text = 0x000000,
     selected = 0x000080,
-    selected_text = 0xFFFFFF,
+    selected_text = 0xFFFF00,
     status_bg = 0x000080,
     status_text = 0xFFFFFF,
     good = 0x008000,
@@ -232,8 +232,6 @@ local function DrawList()
         local isSelected = (i == selectedIndex)
         
         if isSelected then
-            gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(COLORS.selected))
-            gdi32.PatBlt(hdc, clientX, yPos, clientW, 1, gdi32.PATCOPY)
             gdi32.SetTextColor(hdc, COLORS.selected_text)
         else
             gdi32.SetTextColor(hdc, COLORS.text)
@@ -255,7 +253,7 @@ local function DrawList()
         else
             gdi32.SetTextColor(hdc, statusColor)
         end
-        gdi32.TextOut(hdc, clientX + 1, yPos, statusChar)
+        gdi32.TextOut(hdc, clientX + 1, yPos, statusChar, 0xFFFFFF)
         
         if isSelected then
             gdi32.SetTextColor(hdc, COLORS.selected_text)
@@ -273,20 +271,20 @@ local function DrawList()
             local dmaStr = tostring(dev.resources.dma or "-")
             gdi32.TextOut(hdc, clientX + 3, yPos, 
                 string.format("%-18s %-15s %3s %3s %-10s %s", 
-                    typeStr, addrStr, irqStr, dmaStr, driverStr, labelStr))
+                    typeStr, addrStr, irqStr, dmaStr, driverStr, labelStr), 0xFFFFFF)
         else
             local statusStr = dev.status:sub(1, 6)
             gdi32.TextOut(hdc, clientX + 3, yPos, 
                 string.format("%-18s %-15s %-6s %-10s %s", 
-                    typeStr, addrStr, statusStr, driverStr, labelStr))
+                    typeStr, addrStr, statusStr, driverStr, labelStr), 0xFFFFFF)
         end
     end
     
     gdi32.SetTextColor(hdc, 0x888888)
     gdi32.SetBkColor(hdc, COLORS.client_bg)
     
-    local hint = "↑↓ Select  ENTER: Properties  TAB: Toggle Resources  R: Refresh  <: Exit"
-    gdi32.TextOut(hdc, clientX + 2, clientY + clientH - 1, hint)
+    local hint = "↑↓ Select  ENTER: Props. TAB: Toggle Resources  R: Refresh  <: Exit"
+    gdi32.TextOut(hdc, clientX + 1, clientY + clientH - 1, hint)
 end
 
 local function DrawProperties()

@@ -261,14 +261,12 @@ local function DrawWindowFrame()
                 local isSelected = (idx == selectedIndex)
                 
                 if isSelected then
-                    gdi32.SelectObject(hdc, gdi32.CreateSolidBrush(COLORS.selected))
-                    gdi32.PatBlt(hdc, clientX, yPos, clientW, 1, gdi32.PATCOPY)
                     gdi32.SetTextColor(hdc, COLORS.selected_text)
                 else
                     gdi32.SetTextColor(hdc, COLORS.text)
                 end
                 
-                gdi32.TextOut(hdc, clientX + 2, yPos, pkg)
+                gdi32.TextOut(hdc, clientX + 2, yPos, pkg, 0xC0C0C0)
             end
         end
     else

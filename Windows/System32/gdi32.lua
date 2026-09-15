@@ -238,16 +238,22 @@ function GDI.SetBkColor(hdc_, clr)
     return oldClr
 end
 
-function GDI.TextOut(hdc, x, y, text)
+function GDI.TextOut(hdc, x, y, text, forceFg)
     if not text then return false end
     local hdc_h = ValidateHDC(hdc)
     local gpu = hdc_h.gpu
+    local pr_bg = 0x000000
     gpu.setForeground(ApplyColorMode(hdc_h.textColor or 0xFFFFFF))
     if hdc_h.bkMode == 2 then
         gpu.setBackground(ApplyColorMode(hdc_h.bkColor))
     end
+    if forceFg then
+        pr_bg=gpu.getBackground()
+        gpu.setBackground(ApplyColorMode(forceFg))
+    end
     if _G.Tier2CM==true then gpu.setBackground(0x4C4C4C) end
     gpu.set(x, y, text)
+    if forceFg then gpu.setBackground(ApplyColorMode(pr_bg)) end
     return true
 end
 

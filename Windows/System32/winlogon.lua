@@ -76,15 +76,15 @@ function winlogon.RedrawLogonBox()
 
     gdi.SetTextColor(hdc, 0xFFFFFF)
     gdi.SetBkColor(hdc, 0xCCCCCC)
-    gdi.TextOut(hdc, winX + 4, winY + 5, "Enter your credentials to log on.")
+    gdi.TextOut(hdc, winX + 4, winY + 5, "Enter your credentials to log on.", 0xA0A0A0)
 
     local userCursor = (inputStage == "username") and "_" or ""
     local passCursor = (inputStage == "password") and "_" or ""
     local maskedPassword = string.rep("*", #enteredPassword)
     gdi.SetTextColor(hdc, 0xFFFFFF)
-    gdi.TextOut(hdc, winX + 4, winY + 7, "User:     " .. currentUser .. userCursor .. "      ")
-    gdi.TextOut(hdc, winX + 4, winY + 9, "Password: " .. maskedPassword .. passCursor .. "      ")
-    gdi.TextOut(hdc, winX + 4, winY + 11, "[Press Enter to confirm]")
+    gdi.TextOut(hdc, winX + 4, winY + 7, "User:     " .. currentUser .. userCursor .. "      ", 0xA0A0A0)
+    gdi.TextOut(hdc, winX + 4, winY + 9, "Password: " .. maskedPassword .. passCursor .. "      ", 0xA0A0A0)
+    gdi.TextOut(hdc, winX + 4, winY + 11, "[Press Enter to confirm]", 0xA0A0A0)
 end
 
 function winlogon.Main(args)

@@ -1,17 +1,14 @@
 local shell32 = {}
 local lCt, lCI = 0, ""
 
--- ===== LDM (Low Display Mode) =====
--- Якщо _G.Tier2CM == true, використовуємо спрощені іконки
 local LDM = _G.Tier2CM == true
 
--- ===== Іконки =====
 shell32.Icons = {
     MyPC = {
-        "------",
-        "| PC |",
-        "--╗╔--",
-        " ─╜╙─ ",
+        "┌────┐ ",
+        "│ PC │ ",
+        "└─┬┬─┘ ",
+        " ─┴┴─  "
     },
     YesNetwork = {
         "▀     ",
@@ -50,34 +47,34 @@ shell32.Icons = {
         "\\\\-█--//"
     },
     SetupMgr = {
-        "|||| N",
-        "\\--| T",
-        "  \\/ O",
-        "|||| S"
+        " [SET] ",
+        " |== |\\",
+        " |___|/",
+        "  /-\\  "
     },
     StartButton = {
-        "______",
-        "| NT |",
-        "||||||",
-        " Start"
+        " ____ ",
+        "|[#]  |",
+        "|Start|",
+        " ¯¯¯¯ "
     },
     Notepad = {
-        "|-----|",
-        "| TXT |",
-        "|Type |",
-        "|-----|"
+        "o|----\\",
+        "o|==  |",
+        "o|----|",
+        "o|___/ "
     },
     Minesweeper = {
-        " /-| ",
-        " \\-| ",
-        "   | ",
-        "  ---"
+        "  \\* ",
+        " /--\\",
+        "| (O)|",
+        " \\--/"
     },
     IE = {
-        "| +===",
-        "| |___",
-        "| |   ",
-        "| +==="
+        "| +===|",
+        "| |___|",
+        "| \\   ",
+        "|  +=/"
     },
     AppCenter = {
         "/----|",
@@ -87,7 +84,6 @@ shell32.Icons = {
     }
 }
 
--- ===== LDM іконки (спрощені) =====
 shell32.LDMIcons = {
     MyPC = {
         "[PC]",
@@ -145,7 +141,6 @@ shell32.LDMIcons = {
 
 shell32.DeskIcon = {}
 
--- ===== Реєстрація іконки =====
 function shell32.RegisterIcon(icon, x, y, w, h, callback)
     shell32.DeskIcon[icon] = {
         x = x,
@@ -156,7 +151,6 @@ function shell32.RegisterIcon(icon, x, y, w, h, callback)
     }
 end
 
--- ===== Реєстрація іконки (з table y) =====
 function shell32.RegisterIcon(icon, x, yTable, w, h, callback)
     shell32.DeskIcon[icon] = {
         x = x,
@@ -167,7 +161,6 @@ function shell32.RegisterIcon(icon, x, yTable, w, h, callback)
     }
 end
 
--- ===== Видалення іконки =====
 function shell32.UnregIcon(icon, x, y)
     local srch = shell32.DeskIcon[icon]
     if srch == nil then return end
@@ -176,26 +169,21 @@ function shell32.UnregIcon(icon, x, y)
     end
 end
 
--- ===== Малювання іконки =====
 function shell32.DrawIcon(hdc, gdi, bkColor, x, y, iconName, label)
-    -- Вибираємо набір іконок залежно від LDM
     local iconSet = LDM and shell32.LDMIcons or shell32.Icons
     local icon = iconSet[iconName]
     
     if not icon then
-        -- Fallback на звичайні іконки, якщо LDM не має цієї іконки
         icon = shell32.Icons[iconName]
     end
     
     if not icon then return false end
     
-    -- Малюємо іконку
     for i, line in ipairs(icon) do
         gdi.SetTextColor(hdc, bkColor)
         gdi.TextOut(hdc, x, y + i - 1, line)
     end
     
-    -- Малюємо підпис
     if label and #label > 5 then
         local labelWidth = #label
         local iconWidth = 0
@@ -216,7 +204,6 @@ function shell32.DrawIcon(hdc, gdi, bkColor, x, y, iconName, label)
     return true
 end
 
--- ===== Обробка кліку =====
 function shell32.HandleClick(clickX, clickY, button)
     local cT = computer.uptime()
     
