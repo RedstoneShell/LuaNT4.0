@@ -13,12 +13,25 @@ WARNING: LuaNT can Write/Read at extrenal **filesystem** devices, by using **ntd
 NO, bro... is a Systems Management Servers, or simple: App Market, here programs, drivers and other things, that here on GitHub agreed by me(RedstoneShell), you can see list of programs at LuaNT GitHub(SystemsManServer/packages.cfg)
 
 ### Wireless HDD's!
-From 14.09.2026, you can use program **nfs.lua**(Network FileSystem), install by SMS > Wireless HDD. For start, create server with OpenOS, insert disk with OpenOS, and disk that need to make Wireless, or connect external RAID, he identical. Now install **NetHDD Server**->"pastebin get -f zNjJJFZ3 nethdd_serv.lua", and enter "nethdd_serv". If you start it at first time, he displays HDD's list to select HDD's to make it Wireless, enter number of needed disk and press ENTER. After that server makes this disk Wireless. Now at LuaNT open Start menu > Run..., and enter "**nfs.lua**" and press ENTER. Wait some time and in window click "[SEARCH]", wait some time, and click enter at needed server (TIP: edit nethdd_serv.lua to change server name from "\\\\MYSERVER\\disk" to needed). Now after ENTER, open new windows, by clicking any letter at keyboard, you set letter of Wireless disk, by press "[OK]" you mount wireless disk in system. Now you can open Start menu > File Explorer, and select new disk that named for example: "\\MYSERVER\disk". Now after mounting, every programs and LuaNT see this disk as normal disk in your computer. WARNING!: After reboot, connection to disk RESET, after that you need to repeat all actions to Re-mount Wireless back in LuaNT! 
+From 14.09.2026, you can use program **nfs.lua**(Network FileSystem), install by SMS > Wireless HDD. For start, create server with OpenOS, insert disk with OpenOS, and disk that need to make Wireless, or connect external RAID, he identical. Now install **NetHDD Server**->"pastebin get -f zNjJJFZ3 nethdd_serv.lua", and enter "nethdd_serv". If you start it at first time, he displays HDD's list to select HDD's to make it Wireless, enter number of needed disk and press ENTER. After that server makes this disk Wireless. Now at LuaNT open Start menu > Run..., and enter "**nfs.lua**" and press ENTER. Wait some time and in window click "[SEARCH]", wait some time, and click enter at needed server (TIP: edit nethdd_serv.lua to change server name from "\\\\MYSERVER\\disk" to needed). Now after ENTER, open new windows, by clicking any letter at keyboard, you set letter of Wireless disk, by press "[OK]" you mount wireless disk in system. Now you can open Start menu > File Explorer, and select new disk that named for example: "\\MYSERVER\disk". Now after mounting, every programs and LuaNT see this disk as normal disk in your computer. WARNING!: After reboot, connection to disk RESET, after that you need to repeat all actions to Re-mount Wireless back in LuaNT!
+
+### Relay Control
+From 15.09.2026, you can use program **L2ctrl.lua**(Relay Controller), install by SMS > L2Control. For start, place near Relay(https://ocdoc.cil.li/block:switch) and connect to computer with LuaNT, now open Start menu > Run... and enter "L2ctrl" and press ENTER, in menu you can switch Repeater mode, for wireless Relay switch strenght. For **Lossmeter** button, create computer with OpenOS, place **Network Card**, run "pastebin get -f VebVX21x lossmeter.lua" and start "lossmeter". After connect OpenOS computer to Relay by **Cable**, now check if in computer with LuaNT installed **Network Card**, after check click button **Lossmeter**, wait some time, and after that at screen you see % of Loss, transmited/received packets and lossed packets.
+Heres menu:
+![ColorSetup](not_copyable/2026-09-15_12.17.29.png)
+
+Loss for Relay without anything:
+![ColorSetup](not_copyable/2026-09-15_12.18.44.png)
+
+Loss for Relay with Tier 2 CPU only:
+![ColorSetup](not_copyable/2026-09-15_12.20.16.png)
+
+Loss for Relay with Tier 3 CPU only:
+![ColorSetup](not_copyable/2026-09-15_12.21.39.png)
 
 ### Why colors at my Tier 1/2 screens soo werid (i don't have Tier 3 screen/videocard)
 Yet, LuaNT 4.0 maked only for Tier 3 screens/gpu's, but after 4.0.1.3, you can use Start>Color Setup... and select need color map (Monochrome, 16 colors, 256 colors). After Reboot, color map changed. I don't see this function in other OS, and i think, i made it first in OpenComputer. Idk why, but on Tier 1 screen don't work clicks...
-Heres menu:
-![ColorSetup](not_copyable/2026-08-31_00.19.05.png)
+![L2Control](not_copyable/2026-08-31_00.19.05.png)
 
 And Tier 1/2/3 screens modes (1bit/4bit/8bit colors):
 ![ColorSetup](not_copyable/2026-08-31_00.18.40.png)
