@@ -74,7 +74,7 @@ if not _G.Mm.NonPagedPool["HKEY_LOCAL_MACHINE\\BCD00000000"] then
     computer.shutdown(false)
 end
 
-regedit.SetValue("\\Software\\RedstoneShell\\Windows NT\\CurrentVersion", "CurrentVersion", "4.0.1.3")
+regedit.SetValue("\\Software\\RedstoneShell\\Windows NT\\CurrentVersion", "CurrentVersion", "4.0.1.4")
 
 -- NT BCD Config
 DbgPrint("BCD: Parsing Boot Configuration Data entries...")
@@ -559,6 +559,110 @@ local function LoadDriver(file)
     end
 end
 
+_G.IoConnectInterrupt = function(ServiceRoutine)
+    if type(ServiceRoutine) ~= "function" then
+        DbgPrint("IO: IoConnectInterrupt failed - ServiceRoutine is not a function")
+        return nil
+    end
+
+    local address = string.format("IRQ%08X", math.random(0, 0xFFFFFFFF))
+    while _G.Mm.NonPagedPool["\\Structures\\" .. address] do
+        address = string.format("IRQ%08X", math.random(0, 0xFFFFFFFF))
+    end
+
+    local interruptObject = {
+        Address = address,
+        ServiceRoutine = ServiceRoutine,
+        Connected = true,
+        RegisteredAt = computer.uptime(),
+        args = {
+            arg1 = nil,
+            arg2 = nil,
+            arg3 = nil,
+            arg4 = nil,
+            arg5 = nil
+        }
+    }
+
+    _G.Mm.NonPagedPool["\\Structures\\" .. address] = interruptObject
+
+    DbgPrint("IO: IoConnectInterrupt - Registered handler at \\Structures\\" .. address)
+    return address
+end
+
+_G.IoDisconnectInterrupt = function(InterruptObject)
+    if type(InterruptObject) ~= "string" then
+        return false
+    end
+    local key = "\\Structures\\" .. InterruptObject
+    if _G.Mm.NonPagedPool[key] then
+        _G.Mm.NonPagedPool[key] = nil
+        DbgPrint("IO: IoDisconnectInterrupt - Removed handler " .. InterruptObject)
+        return true
+    end
+    return false
+end
+
+_G.KeInitializeEvent = function(Event, Type, State)
+    Event.Type = Type or 0        -- 0 = NotificationEvent, 1 = SynchronizationEvent
+    Event.State = State or false
+    Event.Waiters = {}
+end
+
+_G.KeSetEvent = function(Event, Increment, Wait)
+    if not Event then return false end
+
+    if Event.Type == 0 then
+        Event.State = true
+    end
+
+    if Event.Waiters then
+        for _, waiter in ipairs(Event.Waiters) do
+            if waiter.co and coroutine.status(waiter.co) == "suspended" then
+                waiter.signal = true
+            end
+        end
+        Event.Waiters = {}
+    end
+
+    return true
+end
+
+_G.ExInitializeWorkItem = function(WorkItem, Routine, Context)
+    WorkItem.Routine = Routine
+    WorkItem.Context = Context
+    WorkItem.Inserted = false
+    WorkItem.QueuedAt = 0
+end
+
+_G.ExQueueWorkItem = function(WorkItem, QueueType)
+    if not WorkItem or not WorkItem.Routine then
+        DbgPrint("IO: ExQueueWorkItem - invalid WorkItem")
+        return false
+    end
+
+    if WorkItem.Inserted then
+        DbgPrint("IO: ExQueueWorkItem - WorkItem already queued")
+        return false
+    end
+
+    WorkItem.Inserted = true
+    WorkItem.QueuedAt = computer.uptime()
+
+    if not _G.KeWorkQueue then
+        _G.KeWorkQueue = {}
+    end
+    table.insert(_G.KeWorkQueue, WorkItem)
+
+    DbgPrint("IO: ExQueueWorkItem - WorkItem queued (type=" .. tostring(QueueType) .. ")")
+    return true
+end
+
+_G.ExDequeueWorkItem = function()
+    if not _G.KeWorkQueue then return nil end
+    return table.remove(_G.KeWorkQueue, 1)
+end
+
 -- Services setup
 local rpcRegPath = "\\Software\\RedstoneShell\\Windows\\CurrentControlSet\\Services\\RpcSs"
 
@@ -651,7 +755,6 @@ function _G.CreateNoMedia()
     }
 end
 
--- Memory Manager load data in RAM
 Mm.AllocateNonPaged("\\Device\\Null", {
     open  = function() return 999 end,
     write = function() return true end,
@@ -664,19 +767,23 @@ Mm.AllocateNonPaged("\\Device\\Video", {
     Address=_G.HAL.gpu, Mode="NT_GUI"
 })
 
--- SCM RPC init (idk why, but this not creates RPC table in services.lua, and I moved this code here)
-
 function KiInitializeFileSystems()
     local c, bAddr = component, computer.getBootAddress()
     local floppyDrv, regStP = {}, "\\Software\\RedstoneShell\\Windows\\CurrentControlSet\\Control\\Class\\{4d36e967-e325-11ce-bfc1-08002be10318}"
     for addr in c.list("disk_drive") do
         table.insert(floppyDrv, c.proxy(addr))
     end
+    for addr in c.list("filesystem") do
+        local diskProxy = c.proxy(addr)
+        if diskProxy.spaceTotal() == 524288 then
+            table.insert(floppyDrv, diskProxy)
+        end
+    end
     local floppyL = {"A:", "B:"}
     for i, drive in ipairs(floppyDrv) do
         if i>2 then break end
         local l = floppyL[i]
-        local mediaAddr = drive.media()
+        local mediaAddr = drive.media and drive.media() or nil
         if mediaAddr then
             Mm.AllocateNonPaged("\\Device\\Floppy"..(i-1).."\\Partition0", c.proxy(mediaAddr))
             DbgPrint("Ob: Registered \\Device\\Floppy"..(i-1).."\\Partition0")
@@ -693,7 +800,7 @@ function KiInitializeFileSystems()
     for addr in c.list("filesystem") do
         local isFl = false
         for _, fDrive in ipairs(floppyDrv) do
-            if fDrive.media()==addr then isFl=true end
+            if fDrive.media and fDrive.media()==addr then isFl=true end
         end
         if not isFl then
             local diskProxy = component.proxy(addr)
@@ -1048,10 +1155,6 @@ err12=nil
 
 
 function KiInterruptDispatch(sig, addr, arg1, arg2, arg3, arg4)
-    if _G.PnPManager and _G.PnPManager.PollEvents then
-        _G.PnPManager.PollEvents(sig, addr, arg1, arg2, arg3, arg4)
-    end
-    
     if sig == "key_down" then
         if wls then
             local exp = winlogon.HandleKey(arg1, arg2)
@@ -1102,7 +1205,7 @@ local lastRegSave=30
 _G.InThreadResume = false
 while true do
     if not component.proxy(computer.getBootAddress()) then KeBugCheckEx("0x0000007B", "INACCESSABLE_BOOT_DEVICE", "") end
-    _G.NTTC=_G.NTTC+1
+    _G.NTTC = _G.NTTC + 1
     local sig, addr, arg1, arg2, arg3, arg4 = computer.pullSignal(0.01)
     if sig then
         if _G.KRNL_ETW and _G.KRNL_ETW.PushSignal then
@@ -1110,6 +1213,32 @@ while true do
         end
         if KiInterruptDispatch then
             _G.KiInterruptDispatch(sig, addr, arg1, arg2, arg3, arg4)
+        end
+        if _G.Mm and _G.Mm.NonPagedPool then
+            for key, obj in pairs(_G.Mm.NonPagedPool) do
+                if type(key) == "string" and key:match("^\\Structures\\IRQ") and
+                type(obj) == "table" and obj.Connected and obj.ServiceRoutine then
+                    obj.args.arg1 = arg1
+                    obj.args.arg2 = arg2
+                    obj.args.arg3 = arg3
+                    obj.args.arg4 = arg4
+                    obj.args.arg5 = sig
+                    local ok, err = pcall(obj.ServiceRoutine, obj.args, sig, addr, arg1, arg2, arg3, arg4)
+                    if not ok then
+                        DbgPrint("IO: Interrupt handler " .. tostring(key) .. " crashed: " .. tostring(err))
+                    end
+                end
+            end
+        end
+    end
+    if _G.KeWorkQueue and #_G.KeWorkQueue > 0 then
+        local wi = _G.ExDequeueWorkItem()
+        if wi and wi.Routine then
+            wi.Inserted = false
+            local ok, err = pcall(wi.Routine, wi.Context)
+            if not ok then
+                _G.DbgPrint("IO: WorkItem crashed: " .. tostring(err))
+            end
         end
     end
     
