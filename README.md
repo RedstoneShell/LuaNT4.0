@@ -7,6 +7,8 @@ Have a Winlogon, drivers, services, Registry, multi-task, Plug-and-Play, WinUpda
 
 NOW you can Print and Scan pages of paper with OpenPrinter (https://www.curseforge.com/minecraft/mc-mods/openprinter), if connect, and use Spooler and WinPrint to print, for make own files NO not use VS Code, instead use Notepad at LuaNT desktop for making file, see **Notepad Help**
 
+**FROM 27.10.2026**, you can use **Tape Drive** from **Computronics** for write/read data. For that you need to go at desktop and open: SMS > TapeWorkingKit > Install. WARNING!: After installing, check if you have connected **Tape Drive**, if you have, reboot your PC for start **4mmdat** driver (need for work with tapes).
+
 ## How to install this?
 First: Create PC with:
    - Standard components
