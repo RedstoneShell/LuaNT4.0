@@ -9,6 +9,22 @@ NOW you can Print and Scan pages of paper with OpenPrinter (https://www.cursefor
 
 **FROM 27.10.2026**, you can use **Tape Drive** from **Computronics** for write/read data. For that you need to go at desktop and open: SMS > TapeWorkingKit > Install. WARNING!: After installing, check if you have connected **Tape Drive**, if you have, reboot your PC for start **4mmdat** driver (need for work with tapes).
 
+**FROM 29.10.2026**, you can use **Camera** from **Computronics** for raycasting everything at front of camera. For install go at desktop abd open: SMS > ConnectixQuickCam > Install. WARNING!: After installing, check if you have connected **Camera**, if you have, reboot your PC for start **vc415** driver (need for work with Camera). For use, open: Start > Run... > QuickCam. After in menu click `[Start Live]` and place block at front of **Camera** to update screen (bug with anti-blinking system). Now you can use it for analyze distance between blocks, here table of distances:
+| Character | Brightness (0.0 – 1.0) | Approx. Distance (FOV 60, MaxDist 32) | Meaning |
+| :---: | :---: | :---: | :--- |
+| ` ` (space) | 0.0 – 0.1 | > 28 blocks | **Empty** – Nothing in view (or very far). |
+| `.` | 0.1 – 0.2 | 25 – 28 blocks | **Very far** – Faint silhouette. |
+| `:` | 0.2 – 0.3 | 22 – 25 blocks | **Far** – Object on the horizon. |
+| `-` | 0.3 – 0.4 | 19 – 22 blocks | **Medium range** – Outlines visible. |
+| `=` | 0.4 – 0.5 | 16 – 19 blocks | **Noticeable object**. |
+| `+` | 0.5 – 0.6 | 13 – 16 blocks | **Close** – Shape is clear. |
+| `*` | 0.6 – 0.7 | 10 – 13 blocks | **Very close**. |
+| `#` | 0.7 – 0.8 | 6 – 10 blocks | **Almost touching**. |
+| `%` | 0.8 – 0.9 | 3 – 6 blocks | **Wall right in front**. |
+| `@` | 0.9 – 1.0 | 0 – 3 blocks | **Point blank** – Camera is touching the block. |
+Screen:
+![RSProgram1](not_copyable/2026-10-29_16.36.04.png)
+
 ## How to install this?
 First: Create PC with:
    - Standard components
